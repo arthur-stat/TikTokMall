@@ -1,9 +1,21 @@
 # TikTokMall
 
+工具：GoLand
+
+Go版本：Go 1.23.4
+
+---
+
 仓库地址：https://github.com/arthur-stat/TikTokMall
 
 ```bash
 git clone https://github.com/arthur-stat/TikTokMall.git
+```
+
+将工作区的所有文件添加到暂存区
+
+```bash
+git add .
 ```
 
 提交改动至本地仓库：
