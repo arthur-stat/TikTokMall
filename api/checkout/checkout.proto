@@ -1,13 +1,17 @@
 syntax = "proto3";
 
-package  checkout;
+package checkout;
 
 import "payment/payment.proto";
+import "api.proto";  // 导入 api.proto 来使用 HTTP 路由注解
 
 option go_package = "/checkout";
 
 service CheckoutService {
-  rpc Checkout(CheckoutReq) returns (CheckoutResp) {}
+  // 为 Checkout 方法添加 HTTP 路由注解
+  rpc Checkout(CheckoutReq) returns (CheckoutResp) {
+    option (api.post) = "/checkout";  // POST 请求的路由
+  }
 }
 
 message Address {
@@ -24,7 +28,7 @@ message CheckoutReq {
   string lastname = 3;
   string email = 4;
   Address address = 5;
-  payment.CreditCardInfo credit_card = 6;
+  payment.CreditCardInfo credit_card = 6;  // 引用 payment.proto 中的 CreditCardInfo
 }
 
 message CheckoutResp {

@@ -2,18 +2,30 @@ syntax = "proto3";
 
 package product;
 
+import "api.proto";  // 导入 api.proto 以使用 HTTP 路由注解
+
 option go_package = "/product";
 
 service ProductCatalogService {
-  rpc ListProducts(ListProductsReq) returns (ListProductsResp) {}
-  rpc GetProduct(GetProductReq) returns (GetProductResp) {}
-  rpc SearchProducts(SearchProductsReq) returns (SearchProductsResp) {}
+  // 为 ListProducts 方法添加 GET 路由注解
+  rpc ListProducts(ListProductsReq) returns (ListProductsResp) {
+    option (api.get) = "/products/list";  // GET 请求路由
+  }
+
+  // 为 GetProduct 方法添加 GET 路由注解
+  rpc GetProduct(GetProductReq) returns (GetProductResp) {
+    option (api.get) = "/products/{id}";  // GET 请求路由，带有产品 ID 参数
+  }
+
+  // 为 SearchProducts 方法添加 GET 路由注解
+  rpc SearchProducts(SearchProductsReq) returns (SearchProductsResp) {
+    option (api.get) = "/products/search";  // GET 请求路由
+  }
 }
 
-message ListProductsReq{
+message ListProductsReq {
   int32 page = 1;
   int64 pageSize = 2;
-
   string categoryName = 3;
 }
 
@@ -23,7 +35,6 @@ message Product {
   string description = 3;
   string picture = 4;
   float price = 5;
-
   repeated string categories = 6;
 }
 

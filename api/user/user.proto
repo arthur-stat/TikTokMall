@@ -1,12 +1,21 @@
-syntax="proto3";
+syntax = "proto3";
 
 package user;
 
-option go_package="/user";
+import "api.proto";  // 导入 api.proto 以使用 HTTP 路由注解
+
+option go_package = "/user";
 
 service UserService {
-    rpc Register(RegisterReq) returns (RegisterResp) {}
-    rpc Login(LoginReq) returns (LoginResp) {}
+    // 为 Register 方法添加 POST 路由注解
+    rpc Register(RegisterReq) returns (RegisterResp) {
+        option (api.post) = "/user/register";  // POST 请求路由
+    }
+
+    // 为 Login 方法添加 POST 路由注解
+    rpc Login(LoginReq) returns (LoginResp) {
+        option (api.post) = "/user/login";  // POST 请求路由
+    }
 }
 
 message RegisterReq {
@@ -20,7 +29,7 @@ message RegisterResp {
 }
 
 message LoginReq {
-    string email= 1;
+    string email = 1;
     string password = 2;
 }
 

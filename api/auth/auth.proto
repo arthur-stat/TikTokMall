@@ -2,15 +2,25 @@ syntax="proto3";
 
 package auth;
 
-option go_package="/auth";
+option go_package = "/auth";
+
+// 引入 api.proto 文件，使用路由注解
+import "api.proto";
 
 service AuthService {
-    rpc DeliverTokenByRPC(DeliverTokenReq) returns (DeliveryResp) {}
-    rpc VerifyTokenByRPC(VerifyTokenReq) returns (VerifyResp) {}
+    // 使用 POST 路由
+    rpc DeliverTokenByRPC(DeliverTokenReq) returns (DeliveryResp) {
+        option (api.post) = "/auth/deliver_token";
+    }
+
+    // 使用 POST 路由
+    rpc VerifyTokenByRPC(VerifyTokenReq) returns (VerifyResp) {
+        option (api.post) = "/auth/verify_token";
+    }
 }
 
 message DeliverTokenReq {
-    int32  user_id= 1;
+    int32 user_id = 1;
 }
 
 message VerifyTokenReq {

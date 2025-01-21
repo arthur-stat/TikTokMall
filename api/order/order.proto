@@ -3,13 +3,26 @@ syntax = "proto3";
 package order;
 
 import "cart/cart.proto";
+import "api.proto";  // 引入 api.proto 以使用 HTTP 路由注解
 
 option go_package = "/order";
 
+// OrderService 定义订单服务
 service OrderService {
-  rpc PlaceOrder(PlaceOrderReq) returns (PlaceOrderResp) {}
-  rpc ListOrder(ListOrderReq) returns (ListOrderResp) {}
-  rpc MarkOrderPaid(MarkOrderPaidReq) returns (MarkOrderPaidResp) {}
+  // 为 PlaceOrder 方法添加 POST 路由
+  rpc PlaceOrder(PlaceOrderReq) returns (PlaceOrderResp) {
+    option (api.post) = "/order/place";  // POST 请求路由
+  }
+
+  // 为 ListOrder 方法添加 GET 路由
+  rpc ListOrder(ListOrderReq) returns (ListOrderResp) {
+    option (api.get) = "/order/list/{user_id}";  // GET 请求路由，带有用户ID
+  }
+
+  // 为 MarkOrderPaid 方法添加 PUT 路由
+  rpc MarkOrderPaid(MarkOrderPaidReq) returns (MarkOrderPaidResp) {
+    option (api.put) = "/order/mark_paid";  // PUT 请求路由
+  }
 }
 
 message Address {

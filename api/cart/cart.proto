@@ -4,10 +4,19 @@ package cart;
 
 option go_package = '/cart';
 
+import "api.proto";  // 确保正确引入 api.proto 注解
+
 service CartService {
-  rpc AddItem(AddItemReq) returns (AddItemResp) {}
-  rpc GetCart(GetCartReq) returns (GetCartResp) {}
-  rpc EmptyCart(EmptyCartReq) returns (EmptyCartResp) {}
+  // 为每个 RPC 方法添加 HTTP 路由注解
+  rpc AddItem(AddItemReq) returns (AddItemResp) {
+    option (api.post) = "/cart/add";  // 添加 POST 路由
+  }
+  rpc GetCart(GetCartReq) returns (GetCartResp) {
+    option (api.get) = "/cart/{user_id}";  // 添加 GET 路由
+  }
+  rpc EmptyCart(EmptyCartReq) returns (EmptyCartResp) {
+    option (api.delete) = "/cart/{user_id}";  // 添加 DELETE 路由
+  }
 }
 
 message CartItem {
