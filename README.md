@@ -5,9 +5,38 @@
 - Go, 1.23.4
 - Protocol Buffers, v29.3
 
-仓库地址：[TikTok Mall](https://github.com/arthur-stat/TikTokMall)
+仓库地址:[TikTok Mall](https://github.com/arthur-stat/TikTokMall)
 
-# 每一个微服务的文件结构
+文档地址:[TikTok Mall](https://uestc.feishu.cn/docx/T6HfdUzLqorZqaxpUfschLf2nKj)
+
+# 项目结构
+```bash
+TikTokMall/
+├── app/                    # 各微服务的服务端代码目录
+│   ├── auth/               # 用户认证服务
+│   ├── cart/               # 购物车服务
+│   ├── checkout/           # 结算服务
+│   ├── order/              # 订单服务
+│   ├── payment/            # 支付服务
+│   ├── product/            # 商品服务
+│   └── user/               # 用户服务
+├── idl/                    # Protocol Buffers 定义目录
+│   ├── auth.proto          # 用户认证服务的 .proto 文件
+│   ├── cart.proto          # 购物车服务的 .proto 文件
+│   ├── checkout.proto      # 结算服务的 .proto 文件
+│   ├── order.proto         # 订单服务的 .proto 文件
+│   ├── payment.proto       # 支付服务的 .proto 文件
+│   ├── product.proto       # 商品服务的 .proto 文件
+│   └── user.proto          # 用户服务的 .proto 文件
+├── rpc_gen/                # 生成的客户端代码目录
+├── README.md               # 项目简介文件
+├── clean_generated_code.sh # 清理生成代码的脚本
+├── generate_code.sh        # 生成代码的脚本
+└── tidy_all.sh             # 整理和拉取依赖的脚本
+
+```
+
+# 每个微服务的文件结构
 ```bash
 
 ├── biz // 业务逻辑目录
