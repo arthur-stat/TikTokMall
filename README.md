@@ -10,6 +10,7 @@
 文档地址:[TikTok Mall](https://uestc.feishu.cn/docx/T6HfdUzLqorZqaxpUfschLf2nKj)
 
 # 项目结构
+
 ```bash
 TikTokMall/
 ├── app/                    # 各微服务的服务端代码目录
@@ -29,6 +30,8 @@ TikTokMall/
 │   ├── product.proto       # 商品服务的 .proto 文件
 │   └── user.proto          # 用户服务的 .proto 文件
 ├── rpc_gen/                # 生成的客户端代码目录
+│   ├──kitex_gen/           # Kitex 生成的客户端代码
+│   └──rpc/                 # 自定义的 RPC 客户端代码（如果有手写逻辑）
 ├── README.md               # 项目简介文件
 ├── clean_generated_code.sh # 清理生成代码的脚本
 ├── generate_code.sh        # 生成代码的脚本
@@ -37,6 +40,7 @@ TikTokMall/
 ```
 
 # 每个微服务的文件结构
+
 ```bash
 
 ├── biz // 业务逻辑目录
@@ -77,15 +81,21 @@ TikTokMall/
 - user：用户服务
 
 # 脚本
+
 ## 代码生成
+
 ```bash
 ./generate_code.sh
 ```
+
 ## 清理代码
+
 ```bash
 ./clean_generated_code.sh
 ```
+
 ## 整理和拉取依赖
+
 ```bash
 ./tidy_all.sh
 ```
