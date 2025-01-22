@@ -141,7 +141,6 @@ service/                   # 服务根目录
    - `Dockerfile`: 定义 Docker 镜像构建步骤
    - `kitex.yaml`: Kitex RPC 框架的配置文件，包含服务端配置
 
-
 ## 快速开始
 
 ### 环境要求
@@ -155,40 +154,34 @@ service/                   # 服务根目录
 ### 安装和运行
 
 1. 克隆项目
+
 ```bash
 git clone https://github.com/arthur-stat/TikTokMall.git
 cd TikTokMall
 ```
 
-2. 生成 RPC 代码
-```bash
-./generate_code.sh
-```
+2. 整理依赖
 
-3. 整理依赖
 ```bash
 ./tidy_all.sh
-```
-
-4. 运行服务（示例：运行 user 服务）
-```bash
-cd app/user
-go run main.go
 ```
 
 ### 常用命令
 
 1. 生成 RPC 代码：
+
 ```bash
 ./generate_code.sh
 ```
 
 2. 清理生成的代码：
+
 ```bash
 ./clean_generated_code.sh
 ```
 
 3. 整理和拉取依赖：
+
 ```bash
 ./tidy_all.sh
 ```
