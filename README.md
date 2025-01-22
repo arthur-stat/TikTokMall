@@ -1,15 +1,22 @@
 # TikTokMall
 
-依赖 / 版本：
+TikTokMall 是一个基于微服务架构的电商后端系统，使用 Go 语言开发，采用 Protocol Buffers 进行服务间通信。
 
-- Go, 1.23.4
-- Protocol Buffers, v29.3
+## 技术栈
 
-仓库地址:[TikTok Mall](https://github.com/arthur-stat/TikTokMall)
+- Go 1.23.4
+- Protocol Buffers v29.3
+- Kitex RPC 框架
+- MySQL
+- Redis
+- etcd (服务注册与发现)
 
-文档地址:[TikTok Mall](https://uestc.feishu.cn/docx/T6HfdUzLqorZqaxpUfschLf2nKj)
+## 相关链接
 
-# 项目结构
+- 仓库地址: [TikTok Mall](https://github.com/arthur-stat/TikTokMall)
+- 文档地址: [TikTok Mall](https://uestc.feishu.cn/docx/T6HfdUzLqorZqaxpUfschLf2nKj)
+
+## 项目结构
 
 ```bash
 TikTokMall/
@@ -22,6 +29,7 @@ TikTokMall/
 │   ├── product/            # 商品服务
 │   └── user/               # 用户服务
 ├── idl/                    # Protocol Buffers 定义目录
+│   ├── api.proto           # API 通用注解文件
 │   ├── auth.proto          # 用户认证服务的 .proto 文件
 │   ├── cart.proto          # 购物车服务的 .proto 文件
 │   ├── checkout.proto      # 结算服务的 .proto 文件
@@ -30,72 +38,157 @@ TikTokMall/
 │   ├── product.proto       # 商品服务的 .proto 文件
 │   └── user.proto          # 用户服务的 .proto 文件
 ├── rpc_gen/                # 生成的客户端代码目录
-│   ├──kitex_gen/           # Kitex 生成的客户端代码
-│   └──rpc/                 # 自定义的 RPC 客户端代码（如果有手写逻辑）
-├── README.md               # 项目简介文件
+│   ├── kitex_gen/          # Kitex 生成的客户端代码
+│   └── rpc/                # 自定义的 RPC 客户端代码
+├── README.md               # 项目说明文件
 ├── clean_generated_code.sh # 清理生成代码的脚本
 ├── generate_code.sh        # 生成代码的脚本
 └── tidy_all.sh             # 整理和拉取依赖的脚本
-
 ```
 
-# 每个微服务的文件结构
+## 微服务说明
+
+1. **认证服务 (auth)**
+   - 处理用户登录、注册、token管理等认证相关功能
+
+2. **用户服务 (user)**
+   - 管理用户信息、个人资料等
+
+3. **商品服务 (product)**
+   - 处理商品信息、库存管理等
+
+4. **购物车服务 (cart)**
+   - 管理用户购物车
+
+5. **结算服务 (checkout)**
+   - 处理订单结算流程
+
+6. **订单服务 (order)**
+   - 管理订单生命周期
+
+7. **支付服务 (payment)**
+   - 处理支付相关功能
+
+## 微服务通用结构
+
+每个微服务都遵循以下目录结构：
 
 ```bash
-
-├── biz // 业务逻辑目录
-│   ├── dal // 数据访问层 - 用来连接外部数据库进行database初始化、table创建等等
-│   │   ├── init.go
-│   │   ├── mysql
-│   │   │   └── init.go
-│   │   └── redis
-│   │       └── init.go
-│   └── service // service 层，业务逻辑存放的地方。更新时，新的方法会追加文件。
-│       ├── HelloMethod.go
-│       └── HelloMethod_test.go
-├── build.sh
-├── conf // 存放不同环境下的配置文件 - online/test/dev，通过环境变量设置
-│     └── ...
-├── docker-compose.yaml - docker启动mysql,consul等服务
-├── go.mod // go.mod 文件，如不在命令行指定，则默认使用相对于 GOPATH 的相对路径作为 module 名
-├── handler.go // 业务逻辑入口，更新时会全量覆盖
-├── idl - 不一定在这里，我放在了项目根目录下
-│   └── hello.thrift
-├── kitex.yaml
-├── kitex_gen // IDL 内容相关的生成代码，勿动 - 我生成的统一放在项目根目录的rpc_gen/kitex_gen下面了
-│     └── ...
-├── main.go // 程序入口 - 该服务的程序入口，比如auth服务逻辑从这里运行
-├── readme.md
-└── script // 启动脚本
-└── bootstrap.sh
+service/                   # 服务根目录
+├── biz/                  # 业务逻辑目录
+│   ├── dal/             # 数据访问层(Data Access Layer)
+│   │   ├── init.go     # 数据库连接初始化
+│   │   ├── mysql/      # MySQL 相关代码
+│   │   │   ├── init.go        # MySQL 连接初始化
+│   │   │   ├── model.go       # 数据库模型定义
+│   │   │   └── crud.go        # 基础的 CRUD 操作
+│   │   └── redis/      # Redis 相关代码
+│   │       ├── init.go        # Redis 连接初始化
+│   │       └── cache.go       # 缓存操作方法
+│   └── service/        # 业务逻辑实现层
+│       ├── service.go         # 服务接口定义
+│       ├── service_impl.go    # 接口具体实现
+│       └── service_test.go    # 单元测试
+├── conf/                # 配置文件目录
+│   ├── conf.go         # 配置结构定义和加载逻辑
+│   ├── dev/           # 开发环境配置
+│   │   └── conf.yaml   # 开发环境配置文件
+│   ├── test/          # 测试环境配置
+│   │   └── conf.yaml   # 测试环境配置文件
+│   └── online/        # 生产环境配置
+│       └── conf.yaml   # 生产环境配置文件
+├── handler.go          # RPC 请求处理入口
+├── main.go            # 服务启动入口
+├── build.sh           # 服务构建脚本
+├── Dockerfile         # Docker 构建文件
+└── kitex.yaml         # Kitex RPC 框架配置
 ```
 
-注释：
+### 目录结构说明
 
-- auth：认证服务
-- cart：购物车服务
-- checkout：结算服务
-- order：订单服务
-- payment：支付服务
-- product：商品服务
-- user：用户服务
+1. **biz/dal (数据访问层)**
+   - `init.go`: 负责初始化所有数据存储连接
+   - **mysql/**: MySQL 数据库操作相关代码
+     - `init.go`: MySQL 连接池初始化
+     - `model.go`: 数据库模型定义，包含表结构和字段映射
+     - `crud.go`: 基础的增删改查操作实现
+   - **redis/**: Redis 缓存操作相关代码
+     - `init.go`: Redis 连接池初始化
+     - `cache.go`: 缓存的存取、更新、删除等操作
 
-# 脚本
+2. **biz/service (业务逻辑层)**
+   - `service.go`: 定义服务接口和数据结构
+   - `service_impl.go`: 实现具体的业务逻辑
+   - `service_test.go`: 业务逻辑的单元测试
 
-## 代码生成
+3. **conf (配置管理)**
+   - `conf.go`: 定义配置结构和配置加载逻辑
+   - 支持多环境配置：
+     - `dev/`: 开发环境
+     - `test/`: 测试环境
+     - `online/`: 生产环境
+   - 配置文件包含：
+     - 服务基本信息（名称、端口等）
+     - 数据库连接信息
+     - 缓存配置
+     - 日志配置
+     - 服务发现配置
 
+4. **根目录文件**
+   - `handler.go`: 处理 RPC 请求，调用对应的业务逻辑
+   - `main.go`: 服务启动入口，负责初始化和启动服务
+   - `build.sh`: 服务构建脚本
+   - `Dockerfile`: 定义 Docker 镜像构建步骤
+   - `kitex.yaml`: Kitex RPC 框架的配置文件，包含服务端配置
+
+
+## 快速开始
+
+### 环境要求
+
+- Go 1.23.4 或更高版本
+- Protocol Buffers v29.3
+- MySQL
+- Redis
+- etcd
+
+### 安装和运行
+
+1. 克隆项目
+```bash
+git clone https://github.com/arthur-stat/TikTokMall.git
+cd TikTokMall
+```
+
+2. 生成 RPC 代码
 ```bash
 ./generate_code.sh
 ```
 
-## 清理代码
+3. 整理依赖
+```bash
+./tidy_all.sh
+```
 
+4. 运行服务（示例：运行 user 服务）
+```bash
+cd app/user
+go run main.go
+```
+
+### 常用命令
+
+1. 生成 RPC 代码：
+```bash
+./generate_code.sh
+```
+
+2. 清理生成的代码：
 ```bash
 ./clean_generated_code.sh
 ```
 
-## 整理和拉取依赖
-
+3. 整理和拉取依赖：
 ```bash
 ./tidy_all.sh
 ```
