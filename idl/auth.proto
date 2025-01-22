@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package auth;
+
+option go_package = "/auth";
+
+import "api.proto";
+
+service AuthService {
+  rpc DeliverTokenByRPC(DeliverTokenReq) returns (DeliveryResp) {
+    option (api.post) = "/auth/deliver_token";
+  }
+  rpc VerifyTokenByRPC(VerifyTokenReq) returns (VerifyResp) {
+    option (api.post) = "/auth/verify_token";
+  }
+}
+
+message DeliverTokenReq { int32 user_id = 1 [ (api.body) = "user_id" ]; }
+
+message VerifyTokenReq { string token = 1 [ (api.body) = "token" ]; }
+
+message DeliveryResp { string token = 1; }
+
+message VerifyResp { bool res = 1; }
+

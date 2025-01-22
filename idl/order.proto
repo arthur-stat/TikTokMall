@@ -1,0 +1,75 @@
+syntax = "proto3";
+
+package order;
+
+import "cart.proto";
+import "api.proto";
+
+option go_package = "/order";
+
+service OrderService {
+  rpc PlaceOrder(PlaceOrderReq) returns (PlaceOrderResp) {
+    option (api.post) = "/order/place_order";
+  }
+  rpc ListOrder(ListOrderReq) returns (ListOrderResp) {
+    option (api.get) = "/order/list";
+  }
+  rpc MarkOrderPaid(MarkOrderPaidReq) returns (MarkOrderPaidResp) {
+    option (api.post) = "/order/mark_paid";
+  }
+}
+
+message Address {
+  string street_address = 1 [(api.body) = "street_address"];
+  string city = 2 [(api.body) = "city"];
+  string state = 3 [(api.body) = "state"];
+  string country = 4 [(api.body) = "country"];
+  int32 zip_code = 5 [(api.body) = "zip_code"];
+}
+
+message PlaceOrderReq {
+  uint32 user_id = 1 [(api.body) = "user_id"];
+  string user_currency = 2 [(api.body) = "user_currency"];
+
+  Address address = 3 [(api.body) = "address"];
+  string email = 4 [(api.body) = "email"];
+  repeated OrderItem order_items = 5 [(api.body) = "order_items"];
+}
+
+message OrderItem {
+  cart.CartItem item = 1 [(api.body) = "item"];
+  float cost = 2 [(api.body) = "cost"];
+}
+
+message OrderResult {
+  string order_id = 1;
+}
+
+message PlaceOrderResp {
+  OrderResult order = 1;
+}
+
+message ListOrderReq {
+  uint32 user_id = 1 [(api.query) = "user_id"];
+}
+
+message Order {
+  repeated OrderItem order_items = 1;
+  string order_id = 2;
+  uint32 user_id = 3;
+  string user_currency = 4;
+  Address address = 5;
+  string email = 6;
+  int32 created_at = 7;
+}
+
+message ListOrderResp {
+  repeated Order orders = 1;
+}
+
+message MarkOrderPaidReq {
+  uint32 user_id = 1 [(api.body) = "user_id"];
+  string order_id = 2 [(api.body) = "order_id"];
+}
+
+message MarkOrderPaidResp {}

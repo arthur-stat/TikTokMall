@@ -7,71 +7,34 @@
 
 仓库地址：[TikTok Mall](https://github.com/arthur-stat/TikTokMall)
 
-# 文件结构
+# 每一个微服务的文件结构
+```bash
 
-```powershell
-│   main.go
-│   README.md
-│
-├───.idea
-│       .gitignore
-│       .name
-│       modules.xml
-│       TikTokMall.iml
-│       vcs.xml
-│       workspace.xml
-│
-├───api
-│   │   original_api.zip
-│   │
-│   ├───auth
-│   │       auth.proto
-│   │
-│   ├───cart
-│   │       cart.proto
-│   │
-│   ├───checkout
-│   │       checkout.proto
-│   │
-│   ├───order
-│   │       order.proto
-│   │
-│   ├───payment
-│   │       payment.proto
-│   │
-│   ├───product
-│   │       product.proto
-│   │
-│   └───user
-│           user.proto
-│
-├───auth
-│       auth.pb.go
-│       auth_grpc.pb.go
-│
-├───cart
-│       cart.pb.go
-│       cart_grpc.pb.go
-│
-├───checkout
-│       checkout.pb.go
-│       checkout_grpc.pb.go
-│
-├───order
-│       order.pb.go
-│       order_grpc.pb.go
-│
-├───payment
-│       payment.pb.go
-│       payment_grpc.pb.go
-│
-├───product
-│       product.pb.go
-│       product_grpc.pb.go
-│
-└───user
-        user.pb.go
-        user_grpc.pb.go
+├── biz // 业务逻辑目录
+│   ├── dal // 数据访问层 - 用来连接外部数据库进行database初始化、table创建等等
+│   │   ├── init.go
+│   │   ├── mysql
+│   │   │   └── init.go
+│   │   └── redis
+│   │       └── init.go
+│   └── service // service 层，业务逻辑存放的地方。更新时，新的方法会追加文件。
+│       ├── HelloMethod.go
+│       └── HelloMethod_test.go
+├── build.sh
+├── conf // 存放不同环境下的配置文件 - online/test/dev，通过环境变量设置
+│     └── ...
+├── docker-compose.yaml - docker启动mysql,consul等服务
+├── go.mod // go.mod 文件，如不在命令行指定，则默认使用相对于 GOPATH 的相对路径作为 module 名
+├── handler.go // 业务逻辑入口，更新时会全量覆盖
+├── idl - 不一定在这里，我放在了项目根目录下
+│   └── hello.thrift
+├── kitex.yaml
+├── kitex_gen // IDL 内容相关的生成代码，勿动 - 我生成的统一放在项目根目录的rpc_gen/kitex_gen下面了
+│     └── ...
+├── main.go // 程序入口 - 该服务的程序入口，比如auth服务逻辑从这里运行
+├── readme.md
+└── script // 启动脚本
+└── bootstrap.sh
 ```
 
 注释：
@@ -84,27 +47,16 @@
 - product：商品服务
 - user：用户服务
 
-# Protobuf接口编译
-
-项目提供了`.proto`接口文件，需要对其进行编译为go文件
-
----
-
-Linux安装：
-
+# 脚本
+## 代码生成
 ```bash
-sudo apt install protobuf-compiler  # or 'brew install protobuf'
-go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+./generate_code.sh
 ```
-
-Windows下载：[Protocol Buffers](https://github.com/protocolbuffers/protobuf/releases)，安装后配置环境变量
-
----
-
-示例
-
+## 清理代码
 ```bash
-protoc --go_out=. --go-grpc_out=. proto/cart/cart.proto
+./clean_generated_code.sh
 ```
-
+## 整理和拉取依赖
+```bash
+./tidy_all.sh
+```

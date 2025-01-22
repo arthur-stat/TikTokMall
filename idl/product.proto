@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+package product;
+
+import "api.proto";
+
+option go_package = "/product";
+
+service ProductCatalogService {
+  rpc ListProducts(ListProductsReq) returns (ListProductsResp) {
+    option (api.get) = "/product/list";
+  }
+  rpc GetProduct(GetProductReq) returns (GetProductResp) {
+    option (api.get) = "/product/{id}";
+  }
+  rpc SearchProducts(SearchProductsReq) returns (SearchProductsResp) {
+    option (api.get) = "/product/search";
+  }
+}
+
+message ListProductsReq {
+  int32 page = 1 [(api.query) = "page"];
+  int64 pageSize = 2 [(api.query) = "pageSize"];
+  string categoryName = 3 [(api.query) = "categoryName"];
+}
+
+message Product {
+  uint32 id = 1;
+  string name = 2;
+  string description = 3;
+  string picture = 4;
+  float price = 5;
+  repeated string categories = 6;
+}
+
+message ListProductsResp {
+  repeated Product products = 1;
+}
+
+message GetProductReq {
+  uint32 id = 1 [(api.path) = "id"];
+}
+
+message GetProductResp {
+  Product product = 1;
+}
+
+message SearchProductsReq {
+  string query = 1 [(api.query) = "query"];
+}
+
+message SearchProductsResp {
+  repeated Product results = 1;
+}
