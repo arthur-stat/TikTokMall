@@ -1,15 +1,50 @@
 # TikTokMall
 
-TikTokMall 是一个基于微服务架构的电商后端系统，使用 Go 语言开发，采用 Protocol Buffers 进行服务间通信。
+TikTokMall 是一个基于字节跳动开源的 CloudWeGo 中间件集合的高性能微服务架构电商后端系统，使用 Go 语言开发，采用 Protocol Buffers 进行服务间通信。
 
 ## 技术栈
 
+### 基础框架
 - Go 1.23.4
+- CloudWeGo 微服务框架集
+  - Kitex: 高性能 RPC 框架
+  - Hertz: HTTP 框架
 - Protocol Buffers v29.3
-- Kitex RPC 框架
-- MySQL
-- Redis
-- etcd (服务注册与发现)
+
+### 存储
+- MySQL: 主要数据存储
+- Redis: 缓存、会话管理
+- MongoDB: 日志存储（可选）
+
+### 中间件
+- Consul: 服务注册与发现
+- Jaeger: 分布式链路追踪
+- Prometheus: 监控系统
+- Grafana: 可视化监控
+- ELK Stack: 日志收集与分析（可选）
+  - Elasticsearch
+  - Logstash
+  - Kibana
+
+### 开发工具
+- Docker: 容器化部署
+- Docker Compose: 本地开发环境编排
+- Make: 项目构建工具
+- Swagger: API 文档生成
+- GoMock: 单元测试 mock 工具
+
+### 项目特性
+- 微服务架构
+- RPC 通信
+- 服务注册与发现
+- 负载均衡
+- 熔断降级
+- 链路追踪
+- 监控告警
+- 日志管理
+- 缓存机制
+- 分布式事务
+- 统一认证
 
 ## 相关链接
 
@@ -29,21 +64,21 @@ TikTokMall/
 │   ├── product/            # 商品服务
 │   └── user/               # 用户服务
 ├── idl/                    # Protocol Buffers 定义目录
-│   ├── api.proto           # API 通用注解文件
-│   ├── auth.proto          # 用户认证服务的 .proto 文件
-│   ├── cart.proto          # 购物车服务的 .proto 文件
-│   ├── checkout.proto      # 结算服务的 .proto 文件
-│   ├── order.proto         # 订单服务的 .proto 文件
-│   ├── payment.proto       # 支付服务的 .proto 文件
-│   ├── product.proto       # 商品服务的 .proto 文件
-│   └── user.proto          # 用户服务的 .proto 文件
+│   ├── api.proto          # API 通用注解文件
+│   ├── auth.proto         # 用户认证服务的 .proto 文件
+│   ├── cart.proto         # 购物车服务的 .proto 文件
+│   ├── checkout.proto     # 结算服务的 .proto 文件
+│   ├── order.proto        # 订单服务的 .proto 文件
+│   ├── payment.proto      # 支付服务的 .proto 文件
+│   ├── product.proto      # 商品服务的 .proto 文件
+│   └── user.proto         # 用户服务的 .proto 文件
 ├── rpc_gen/                # 生成的客户端代码目录
-│   ├── kitex_gen/          # Kitex 生成的客户端代码
-│   └── rpc/                # 自定义的 RPC 客户端代码
-├── README.md               # 项目说明文件
+│   ├── kitex_gen/         # Kitex 生成的客户端代码
+│   └── rpc/               # 自定义的 RPC 客户端代码
+├── README.md              # 项目说明文件
 ├── clean_generated_code.sh # 清理生成代码的脚本
-├── generate_code.sh        # 生成代码的脚本
-└── tidy_all.sh             # 整理和拉取依赖的脚本
+├── generate_code.sh       # 生成代码的脚本
+└── tidy_all.sh           # 整理和拉取依赖的脚本
 ```
 
 ## 微服务说明
@@ -149,39 +184,35 @@ service/                   # 服务根目录
 - Protocol Buffers v29.3
 - MySQL
 - Redis
-- etcd
+- Consul
+- Docker & Docker Compose
 
-### 安装和运行
-
-1. 克隆项目
-
-```bash
-git clone https://github.com/arthur-stat/TikTokMall.git
-cd TikTokMall
-```
-
-2. 整理依赖
-
-```bash
-./tidy_all.sh
-```
 
 ### 常用命令
 
 1. 生成 RPC 代码：
-
 ```bash
 ./generate_code.sh
 ```
 
 2. 清理生成的代码：
-
 ```bash
 ./clean_generated_code.sh
 ```
 
 3. 整理和拉取依赖：
-
 ```bash
 ./tidy_all.sh
 ```
+
+## 贡献指南
+
+1. Fork 本仓库
+2. 创建您的特性分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交您的更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 打开一个 Pull Request
+
+## 许可证
+
+[MIT License](LICENSE)
