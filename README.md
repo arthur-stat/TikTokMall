@@ -63,6 +63,12 @@ TikTokMall/
 │   ├── payment/            # 支付服务
 │   ├── product/            # 商品服务
 │   └── user/               # 用户服务
+├── deploy/                # 部署和基础设施配置
+│   └── docker/           # Docker 相关配置
+│       ├── docker-compose.yaml  # 基础服务编排配置
+│       ├── mysql/        # MySQL 配置和初始化脚本
+│       ├── prometheus/   # Prometheus 监控配置
+│       └── logstash/     # ELK 日志收集配置
 ├── idl/                    # Protocol Buffers 定义目录
 │   ├── api.proto          # API 通用注解文件
 │   ├── auth.proto         # 用户认证服务的 .proto 文件
