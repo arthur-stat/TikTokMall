@@ -1,0 +1,48 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'consul_services'
+    consul_sd_configs:
+      - server: 'consul:8500'
+        services: []  # 抓取所有服务
+
+  - job_name: 'user_service'
+    static_configs:
+      - targets: ['user:8888']
+    metrics_path: '/metrics'
+
+  - job_name: 'auth_service'
+    static_configs:
+      - targets: ['auth:8888']
+    metrics_path: '/metrics'
+
+  - job_name: 'product_service'
+    static_configs:
+      - targets: ['product:8888']
+    metrics_path: '/metrics'
+
+  - job_name: 'cart_service'
+    static_configs:
+      - targets: ['cart:8888']
+    metrics_path: '/metrics'
+
+  - job_name: 'order_service'
+    static_configs:
+      - targets: ['order:8888']
+    metrics_path: '/metrics'
+
+  - job_name: 'payment_service'
+    static_configs:
+      - targets: ['payment:8888']
+    metrics_path: '/metrics'
+
+  - job_name: 'checkout_service'
+    static_configs:
+      - targets: ['checkout:8888']
+    metrics_path: '/metrics' 

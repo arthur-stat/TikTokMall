@@ -1,0 +1,163 @@
+version: '3.8'
+
+services:
+  # MySQL - 主数据库
+  mysql:
+    image: mysql:8.0
+    container_name: tiktok_mall_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: tiktok_mall
+      MYSQL_USER: tiktok
+      MYSQL_PASSWORD: tiktok123
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql/init:/docker-entrypoint-initdb.d
+    command: --default-authentication-plugin=mysql_native_password
+    networks:
+      - tiktok_mall_net
+
+  # Redis - 缓存服务
+  redis:
+    image: redis:7.0
+    container_name: tiktok_mall_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - tiktok_mall_net
+
+  # Consul - 服务注册与发现
+  consul:
+    image: consul:1.15
+    container_name: tiktok_mall_consul
+    restart: always
+    ports:
+      - "8500:8500"  # HTTP UI
+      - "8600:8600/udp"  # DNS
+    volumes:
+      - consul_data:/consul/data
+    command: agent -server -bootstrap-expect=1 -ui -client=0.0.0.0
+    networks:
+      - tiktok_mall_net
+
+  # Jaeger - 链路追踪
+  jaeger:
+    image: jaegertracing/all-in-one:1.47
+    container_name: tiktok_mall_jaeger
+    restart: always
+    ports:
+      - "5775:5775/udp"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "5778:5778"
+      - "16686:16686"  # UI
+      - "14250:14250"
+      - "14268:14268"
+      - "14269:14269"
+      - "9411:9411"
+    environment:
+      - COLLECTOR_ZIPKIN_HOST_PORT=:9411
+    networks:
+      - tiktok_mall_net
+
+  # Prometheus - 监控系统
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: tiktok_mall_prometheus
+    restart: always
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    networks:
+      - tiktok_mall_net
+
+  # Grafana - 监控可视化
+  grafana:
+    image: grafana/grafana:10.0.3
+    container_name: tiktok_mall_grafana
+    restart: always
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+    depends_on:
+      - prometheus
+    networks:
+      - tiktok_mall_net
+
+  # ElasticSearch - 日志存储
+  elasticsearch:
+    image: elasticsearch:8.9.0
+    container_name: tiktok_mall_elasticsearch
+    restart: always
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - tiktok_mall_net
+
+  # Kibana - 日志可视化
+  kibana:
+    image: kibana:8.9.0
+    container_name: tiktok_mall_kibana
+    restart: always
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+    networks:
+      - tiktok_mall_net
+
+  # Logstash - 日志收集
+  logstash:
+    image: logstash:8.9.0
+    container_name: tiktok_mall_logstash
+    restart: always
+    ports:
+      - "5044:5044"
+      - "5000:5000"
+      - "9600:9600"
+    volumes:
+      - ./logstash/config:/usr/share/logstash/config
+      - ./logstash/pipeline:/usr/share/logstash/pipeline
+    environment:
+      LS_JAVA_OPTS: "-Xmx256m -Xms256m"
+    depends_on:
+      - elasticsearch
+    networks:
+      - tiktok_mall_net
+
+volumes:
+  mysql_data:
+  redis_data:
+  consul_data:
+  prometheus_data:
+  grafana_data:
+  elasticsearch_data:
+
+networks:
+  tiktok_mall_net:
+    driver: bridge 
