@@ -89,74 +89,200 @@ deploy/
 
 ## 使用说明
 
-### 启动所有服务
+### 首次使用
+1. 进入 docker 目录：
 ```bash
 cd deploy/docker
+```
+
+2. 启动所有基础服务：
+```bash
 docker-compose up -d
 ```
 
-### 查看服务状态
+3. 验证服务状态：
 ```bash
 docker-compose ps
 ```
 
-### 查看服务日志
+### 服务访问
+
+1. **Web 界面访问**
+- Consul UI: http://localhost:8500
+- Jaeger UI: http://localhost:16686
+- Prometheus: http://localhost:9090
+- Grafana: http://localhost:3000
+  - 默认账号: admin
+  - 默认密码: admin123
+- Kibana: http://localhost:5601
+
+2. **数据库连接信息**
+```
+MySQL:
+- 主机: localhost:3306
+- 数据库: tiktok_mall
+- 用户名: tiktok
+- 密码: tiktok123
+
+Redis:
+- 主机: localhost:6379
+- 无密码
+```
+
+### 服务管理命令
+
+1. **查看服务状态**
+```bash
+# 查看所有服务状态
+docker-compose ps
+
+# 查看特定服务状态
+docker-compose ps [service_name]
+```
+
+2. **查看服务日志**
 ```bash
 # 查看所有服务日志
 docker-compose logs
 
 # 查看特定服务日志
 docker-compose logs [service_name]
+
+# 实时查看日志
+docker-compose logs -f [service_name]
 ```
 
-### 停止服务
+3. **服务生命周期管理**
 ```bash
-docker-compose down
-```
+# 启动所有服务
+docker-compose up -d
 
-### 重启服务
-```bash
+# 重启特定服务
 docker-compose restart [service_name]
+
+# 停止所有服务
+docker-compose down
+
+# 停止并删除所有数据（包括数据卷）
+docker-compose down -v
 ```
 
-## 配置说明
+### 配置管理
 
-### MySQL 配置
-- 初始化脚本位置: `mysql/init/init.sql`
-- 包含所有数据库表结构
-- 添加新表需要在此文件中添加相应的 SQL
+1. **MySQL 配置**
+```bash
+# 编辑初始化脚本
+vim mysql/init/init.sql
 
-### Prometheus 配置
-- 配置文件位置: `prometheus/prometheus.yml`
-- 已配置所有微服务的监控目标
-- 支持 Consul 服务发现
+# 应用更改（需要重新创建容器）
+docker-compose down
+docker-compose up -d
+```
 
-### Logstash 配置
-- 主配置: `logstash/config/logstash.yml`
-- 管道配置: `logstash/pipeline/logstash.conf`
-- 支持多种日志输入源
-- 统一输出到 Elasticsearch
+2. **Prometheus 配置**
+```bash
+# 编辑配置文件
+vim prometheus/prometheus.yml
 
-## 注意事项
+# 重启 Prometheus 服务
+docker-compose restart prometheus
+```
 
-1. 数据持久化
-- 所有服务的数据都通过 Docker volumes 持久化
-- 位置: `/var/lib/docker/volumes/`
+3. **Logstash 配置**
+```bash
+# 编辑管道配置
+vim logstash/pipeline/logstash.conf
 
-2. 网络配置
-- 所有服务都在 `tiktok_mall_net` 网络中
-- 服务间可以通过服务名互相访问
+# 重启 Logstash 服务
+docker-compose restart logstash
+```
 
-3. 安全性
-- 所有服务都配置了默认密码
-- 生产环境部署时需要修改默认密码
-- 建议配置防火墙规则
+### 数据持久化
 
-4. 资源需求
-- 建议最小配置:
+所有服务数据都通过 Docker volumes 持久化，包括：
+- mysql_data: MySQL 数据文件
+- redis_data: Redis 数据文件
+- consul_data: Consul 数据
+- prometheus_data: 监控数据
+- grafana_data: 仪表盘配置
+- elasticsearch_data: 日志数据
+
+数据卷位置：`/var/lib/docker/volumes/`
+
+### 故障排查指南
+
+1. **服务无法启动**
+```bash
+# 1. 检查服务状态
+docker-compose ps
+
+# 2. 查看详细日志
+docker-compose logs -f [service_name]
+
+# 3. 检查端口占用
+netstat -tunlp | grep [port]
+
+# 4. 重新创建服务
+docker-compose up -d --force-recreate [service_name]
+```
+
+2. **网络问题**
+```bash
+# 检查网络连接
+docker network inspect tiktok_mall_net
+
+# 重新创建网络
+docker-compose down
+docker-compose up -d
+```
+
+3. **数据持久化问题**
+```bash
+# 检查数据卷
+docker volume ls
+
+# 检查数据卷权限
+ls -la /var/lib/docker/volumes/
+
+# 备份数据
+docker run --rm -v [volume_name]:/source -v $(pwd):/backup alpine tar -czf /backup/backup.tar.gz -C /source .
+```
+
+## 性能优化建议
+
+1. **系统要求**
+- 最小配置：
   - CPU: 4 核
   - 内存: 8GB
   - 磁盘: 50GB
+
+2. **性能调优**
+- 适当调整各服务的资源限制
+- 监控服务资源使用情况
+- 根据需要扩展配置
+
+3. **注意事项**
+- 生产环境部署前修改默认密码
+- 配置适当的防火墙规则
+- 定期备份重要数据
+- 监控系统资源使用情况
+
+## 安全建议
+
+1. **密码管理**
+- 修改所有默认密码
+- 使用强密码策略
+- 定期轮换密码
+
+2. **网络安全**
+- 限制服务访问范围
+- 配置防火墙规则
+- 使用 HTTPS 进行通信
+
+3. **数据安全**
+- 定期备份数据
+- 加密敏感信息
+- 实施访问控制
 
 ## 常见问题
 
