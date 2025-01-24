@@ -2,24 +2,125 @@ syntax = "proto3";
 
 package auth;
 
-option go_package = "/auth";
-
 import "api.proto";
 
-service AuthService {
-  rpc DeliverTokenByRPC(DeliverTokenReq) returns (DeliveryResp) {
-    option (api.post) = "/auth/deliver_token";
-  }
-  rpc VerifyTokenByRPC(VerifyTokenReq) returns (VerifyResp) {
-    option (api.post) = "/auth/verify_token";
-  }
+option go_package = "auth";
+
+// 基础响应结构
+message BaseResp {
+    int32 code = 1;
+    string message = 2;
 }
 
-message DeliverTokenReq { int32 user_id = 1 [ (api.body) = "user_id" ]; }
+// 注册请求
+message RegisterRequest {
+    string username = 1 [(api.vd) = "len($) > 3 && len($) < 32"]; // 用户名长度限制
+    string password = 2 [(api.vd) = "len($) > 6 && len($) < 32"]; // 密码长度限制
+    string email = 3 [(api.vd) = "email($)"]; // 邮箱格式验证
+    string phone = 4 [(api.vd) = "regexp('^1[3-9]\\d{9}$')"]; // 手机号格式验证
+}
 
-message VerifyTokenReq { string token = 1 [ (api.body) = "token" ]; }
+// 注册响应
+message RegisterResponse {
+    BaseResp base = 1;
+    RegisterData data = 2;
+}
 
-message DeliveryResp { string token = 1; }
+// 注册返回数据
+message RegisterData {
+    int64 user_id = 1;
+    string token = 2;
+}
 
-message VerifyResp { bool res = 1; }
+// 登录请求
+message LoginRequest {
+    string username = 1 [(api.vd) = "len($) > 0"]; // 用户名不能为空
+    string password = 2 [(api.vd) = "len($) > 0"]; // 密码不能为空
+}
+
+// 登录响应
+message LoginResponse {
+    BaseResp base = 1;
+    LoginData data = 2;
+}
+
+// 登录返回数据
+message LoginData {
+    string token = 1;
+    string refresh_token = 2;
+}
+
+// Token刷新请求
+message RefreshTokenRequest {
+    string refresh_token = 1 [(api.header) = "Authorization"]; // 从请求头获取refresh_token
+}
+
+// Token刷新响应
+message RefreshTokenResponse {
+    BaseResp base = 1;
+    RefreshTokenData data = 2;
+}
+
+// Token刷新返回数据
+message RefreshTokenData {
+    string token = 1;
+    string refresh_token = 2;
+}
+
+// 登出请求
+message LogoutRequest {
+    string token = 1 [(api.header) = "Authorization"]; // 从请求头获取token
+}
+
+// 登出响应
+message LogoutResponse {
+    BaseResp base = 1;
+}
+
+// 验证Token请求
+message ValidateTokenRequest {
+    string token = 1 [(api.header) = "Authorization"]; // 从请求头获取token
+}
+
+// 验证Token响应
+message ValidateTokenResponse {
+    BaseResp base = 1;
+    ValidateTokenData data = 2;
+}
+
+// Token验证返回数据
+message ValidateTokenData {
+    int64 user_id = 1;
+    string username = 2;
+}
+
+// Auth服务接口定义
+service AuthService {
+    // 用户注册
+    rpc Register(RegisterRequest) returns (RegisterResponse) {
+        option (api.post) = "/v1/auth/register";
+        option (api.body) = "*";
+    }
+
+    // 用户登录
+    rpc Login(LoginRequest) returns (LoginResponse) {
+        option (api.post) = "/v1/auth/login";
+        option (api.body) = "*";
+    }
+
+    // 刷新Token
+    rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse) {
+        option (api.post) = "/v1/auth/refresh";
+    }
+
+    // 用户登出
+    rpc Logout(LogoutRequest) returns (LogoutResponse) {
+        option (api.post) = "/v1/auth/logout";
+    }
+
+    // 验证Token（内部接口）
+    rpc ValidateToken(ValidateTokenRequest) returns (ValidateTokenResponse) {
+        option (api.post) = "/v1/auth/validate";
+    }
+}
 

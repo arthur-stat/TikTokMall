@@ -18,6 +18,20 @@ CREATE TABLE IF NOT EXISTS `users` (
     KEY `idx_phone` (`phone`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Token 相关表
+CREATE TABLE IF NOT EXISTS `tokens` (
+    `id` bigint NOT NULL AUTO_INCREMENT,
+    `user_id` bigint NOT NULL,
+    `token` varchar(512) NOT NULL,
+    `refresh_token` varchar(512),
+    `expired_at` timestamp NOT NULL,
+    `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_user_id` (`user_id`),
+    KEY `idx_token` (`token`(191)),
+    KEY `idx_refresh_token` (`refresh_token`(191))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- 商品服务相关表
 CREATE TABLE IF NOT EXISTS `products` (
     `id` bigint NOT NULL AUTO_INCREMENT,
