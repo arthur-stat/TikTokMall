@@ -1,59 +1,86 @@
 package main
 
 import (
-	"net"
-	"time"
+	"fmt"
+	"os"
 
-	"github.com/cloudwego/kitex/pkg/klog"
-	"github.com/cloudwego/kitex/pkg/rpcinfo"
-	"github.com/cloudwego/kitex/server"
-	kitexlogrus "github.com/kitex-contrib/obs-opentelemetry/logging/logrus"
-	"TikTokMall/app/auth/conf"
-	"TikTokMall/app/auth/kitex_gen/auth/authservice"
-	"go.uber.org/zap/zapcore"
-	"gopkg.in/natefinch/lumberjack.v2"
+	"github.com/cloudwego/hertz/pkg/app/server"
+	"github.com/cloudwego/hertz/pkg/common/hlog"
+	"github.com/hertz-contrib/cors"
+
+	"tiktok-mall/app/auth/biz/dal/mysql"
+	"tiktok-mall/app/auth/biz/dal/redis"
+	"tiktok-mall/app/auth/biz/handler"
 )
 
 func main() {
-	opts := kitexInit()
+	// 初始化数据库连接
+	if err := initDeps(); err != nil {
+		hlog.Fatalf("init dependencies failed: %v", err)
+	}
 
-	svr := authservice.NewServer(new(AuthServiceImpl), opts...)
+	// 创建HTTP服务器
+	h := server.Default(
+		server.WithHostPorts(":8000"),
+	)
 
-	err := svr.Run()
-	if err != nil {
-		klog.Error(err.Error())
+	// 添加CORS中间件
+	h.Use(cors.New(cors.Config{
+		AllowOrigins: []string{"*"},
+		AllowMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders: []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		MaxAge:       3600,
+	}))
+
+	// 创建处理器
+	authHandler := handler.NewAuthHandler()
+
+	// 注册路由
+	v1 := h.Group("/v1/auth")
+	{
+		v1.POST("/register", authHandler.Register)
+		v1.POST("/login", authHandler.Login)
+		v1.POST("/refresh", authHandler.RefreshToken)
+		v1.POST("/logout", authHandler.Logout)
+		v1.POST("/validate", authHandler.ValidateToken)
+	}
+
+	// 启动服务器
+	if err := h.Run(); err != nil {
+		hlog.Fatalf("start server failed: %v", err)
 	}
 }
 
-func kitexInit() (opts []server.Option) {
-	// address
-	addr, err := net.ResolveTCPAddr("tcp", conf.GetConf().Kitex.Address)
-	if err != nil {
-		panic(err)
+// initDeps 初始化依赖
+func initDeps() error {
+	// 初始化MySQL
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		getEnvOrDefault("MYSQL_USER", "root"),
+		getEnvOrDefault("MYSQL_PASSWORD", "123456"),
+		getEnvOrDefault("MYSQL_HOST", "localhost"),
+		getEnvOrDefault("MYSQL_PORT", "3306"),
+		getEnvOrDefault("MYSQL_DATABASE", "tiktok_mall"),
+	)
+	if err := mysql.Init(dsn); err != nil {
+		return fmt.Errorf("init mysql failed: %v", err)
 	}
-	opts = append(opts, server.WithServiceAddr(addr))
 
-	// service info
-	opts = append(opts, server.WithServerBasicInfo(&rpcinfo.EndpointBasicInfo{
-		ServiceName: conf.GetConf().Kitex.Service,
-	}))
-
-	// klog
-	logger := kitexlogrus.NewLogger()
-	klog.SetLogger(logger)
-	klog.SetLevel(conf.LogLevel())
-	asyncWriter := &zapcore.BufferedWriteSyncer{
-		WS: zapcore.AddSync(&lumberjack.Logger{
-			Filename:   conf.GetConf().Kitex.LogFileName,
-			MaxSize:    conf.GetConf().Kitex.LogMaxSize,
-			MaxBackups: conf.GetConf().Kitex.LogMaxBackups,
-			MaxAge:     conf.GetConf().Kitex.LogMaxAge,
-		}),
-		FlushInterval: time.Minute,
+	// 初始化Redis
+	if err := redis.Init(
+		getEnvOrDefault("REDIS_ADDR", "localhost:6379"),
+		getEnvOrDefault("REDIS_PASSWORD", ""),
+		0,
+	); err != nil {
+		return fmt.Errorf("init redis failed: %v", err)
 	}
-	klog.SetOutput(asyncWriter)
-	server.RegisterShutdownHook(func() {
-		asyncWriter.Sync()
-	})
-	return
+
+	return nil
+}
+
+// getEnvOrDefault 获取环境变量，如果不存在则返回默认值
+func getEnvOrDefault(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
 }
