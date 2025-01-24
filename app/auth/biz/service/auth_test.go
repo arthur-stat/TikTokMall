@@ -9,51 +9,36 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"tiktok-mall/app/auth/biz/dal/mysql"
-	"tiktok-mall/app/auth/biz/dal/redis"
+	"TikTokMall/app/auth/biz/dal"
+	"TikTokMall/app/auth/biz/dal/mysql"
+	"TikTokMall/app/auth/biz/dal/redis"
 )
 
 func TestMain(m *testing.M) {
 	// 初始化测试环境
-	if err := setupTestEnv(); err != nil {
+	if err := dal.Init(); err != nil {
+		panic(err)
+	}
+
+	// 清理测试数据
+	if err := mysql.DB.Exec("TRUNCATE TABLE users").Error; err != nil {
+		panic(err)
+	}
+	if err := mysql.DB.Exec("TRUNCATE TABLE tokens").Error; err != nil {
 		panic(err)
 	}
 
 	// 运行测试
 	code := m.Run()
 
-	// 清理测试环境
-	if err := cleanupTestEnv(); err != nil {
-		panic(err)
-	}
-
+	// 退出
 	os.Exit(code)
 }
 
-func setupTestEnv() error {
-	// 初始化测试数据库连接
-	if err := mysql.Init("root:123456@tcp(localhost:3306)/tiktok_mall_test?charset=utf8mb4&parseTime=True&loc=Local"); err != nil {
-		return err
-	}
-
-	// 初始化测试Redis连接
-	if err := redis.Init("localhost:6379", "", 1); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func cleanupTestEnv() error {
-	// 清理测试数据
-	if err := mysql.DB.Exec("DELETE FROM users").Error; err != nil {
-		return err
-	}
-	if err := mysql.DB.Exec("DELETE FROM tokens").Error; err != nil {
-		return err
-	}
-
-	return nil
+func cleanupTestData() {
+	mysql.DB.Exec("TRUNCATE TABLE users")
+	mysql.DB.Exec("TRUNCATE TABLE tokens")
+	redis.RDB.FlushDB(context.Background())
 }
 
 func TestAuthService_Register(t *testing.T) {
@@ -325,21 +310,32 @@ func TestAuthService_LoginRetryLimit(t *testing.T) {
 	_, _, err := svc.Register(ctx, username, password, "testretry@example.com", "13800138008")
 	require.NoError(t, err)
 
-	// 尝试多次登录失败
+	// 尝试使用错误密码登录多次
 	for i := 0; i < MaxLoginRetries; i++ {
 		_, _, err = svc.Login(ctx, username, "wrongpassword")
 		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "invalid username or password")
 	}
 
-	// 验证是否被限制登录
-	_, _, err = svc.Login(ctx, username, password)
+	// 再次尝试登录，应该被限制
+	_, _, err = svc.Login(ctx, username, "wrongpassword")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "too many login attempts")
 
-	// 等待限制过期
-	time.Sleep(LoginRetryWindow)
+	// 等待一段时间后重试
+	time.Sleep(time.Second)
+	count, err := redis.GetLoginRetryCount(ctx, username)
+	require.NoError(t, err)
+	assert.Equal(t, int64(MaxLoginRetries), count)
 
-	// 验证是否可以正常登录
-	_, _, err = svc.Login(ctx, username, password)
+	// 使用正确密码登录
+	token, refreshToken, err := svc.Login(ctx, username, password)
 	assert.NoError(t, err)
+	assert.NotEmpty(t, token)
+	assert.NotEmpty(t, refreshToken)
+
+	// 验证重试次数已重置
+	count, err = redis.GetLoginRetryCount(ctx, username)
+	require.NoError(t, err)
+	assert.Zero(t, count)
 }

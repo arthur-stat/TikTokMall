@@ -12,6 +12,30 @@ message BaseResp {
     string message = 2;
 }
 
+// Token投递请求
+message DeliverTokenReq {
+    int64 user_id = 1;
+    string token = 2;
+}
+
+// Token投递响应
+message DeliveryResp {
+    BaseResp base = 1;
+    bool success = 2;
+}
+
+// Token验证请求
+message VerifyTokenReq {
+    string token = 1;
+}
+
+// Token验证响应
+message VerifyResp {
+    BaseResp base = 1;
+    bool valid = 2;
+    int64 user_id = 3;
+}
+
 // 注册请求
 message RegisterRequest {
     string username = 1 [(api.vd) = "len($) > 3 && len($) < 32"]; // 用户名长度限制
@@ -99,13 +123,13 @@ service AuthService {
     // 用户注册
     rpc Register(RegisterRequest) returns (RegisterResponse) {
         option (api.post) = "/v1/auth/register";
-        option (api.body) = "*";
+        option (api.serializer) = "json";
     }
 
     // 用户登录
     rpc Login(LoginRequest) returns (LoginResponse) {
         option (api.post) = "/v1/auth/login";
-        option (api.body) = "*";
+        option (api.serializer) = "json";
     }
 
     // 刷新Token

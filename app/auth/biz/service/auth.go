@@ -11,8 +11,8 @@ import (
 	"github.com/cloudwego/hertz/pkg/common/hlog"
 	"github.com/pkg/errors"
 
-	"tiktok-mall/app/auth/biz/dal/mysql"
-	"tiktok-mall/app/auth/biz/dal/redis"
+	"TikTokMall/app/auth/biz/dal/mysql"
+	"TikTokMall/app/auth/biz/dal/redis"
 )
 
 const (
@@ -60,7 +60,12 @@ func comparePassword(hashedPassword, password string) error {
 }
 
 // validateLoginRetries 验证登录重试次数
-func (s *AuthService) validateLoginRetries(ctx context.Context, username string) error {
+func (s *AuthService) validateLoginRetries(ctx context.Context, username string, isValidPassword bool) error {
+	// 如果密码正确，跳过重试次数验证
+	if isValidPassword {
+		return nil
+	}
+
 	count, err := redis.GetLoginRetryCount(ctx, username)
 	if err != nil {
 		return errors.Wrap(err, "get login retry count failed")
@@ -190,11 +195,6 @@ func (s *AuthService) Register(ctx context.Context, username, password, email, p
 
 // Login 用户登录
 func (s *AuthService) Login(ctx context.Context, username, password string) (string, string, error) {
-	// 验证登录重试次数
-	if err := s.validateLoginRetries(ctx, username); err != nil {
-		return "", "", err
-	}
-
 	// 获取用户信息
 	user, err := mysql.GetUserByUsername(username)
 	if err != nil {
@@ -214,7 +214,14 @@ func (s *AuthService) Login(ctx context.Context, username, password string) (str
 	}
 
 	// 验证密码
-	if err := comparePassword(user.Password, password); err != nil {
+	isValidPassword := comparePassword(user.Password, password) == nil
+
+	// 验证登录重试次数
+	if err := s.validateLoginRetries(ctx, username, isValidPassword); err != nil {
+		return "", "", err
+	}
+
+	if !isValidPassword {
 		// 增加登录重试次数
 		if _, err := redis.IncrLoginRetry(ctx, username); err != nil {
 			hlog.CtxWarnf(ctx, "increment login retry count failed: %v", err)

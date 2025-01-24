@@ -13,7 +13,7 @@ MYSQL_PORT="3306"
 
 # MySQL命令包装器
 mysql_cmd() {
-    sudo mysql "$@"
+    mysql --protocol=TCP -h"$MYSQL_HOST" -P"$MYSQL_PORT" -u"$MYSQL_USER" -p"$MYSQL_PASS" "$@"
 }
 
 # 检查依赖
@@ -45,11 +45,18 @@ check_dependencies() {
 prepare_test_db() {
     echo "准备测试数据库..."
     
+    # 检查初始化SQL文件是否存在
+    INIT_SQL="../../deploy/docker/mysql/init/init.sql"
+    if [ ! -f "$INIT_SQL" ]; then
+        echo -e "${RED}错误: 找不到数据库初始化文件: $INIT_SQL${NC}"
+        exit 1
+    fi
+    
     # 创建测试数据库
     mysql_cmd -e "CREATE DATABASE IF NOT EXISTS tiktok_mall_test;"
     
     # 导入数据库结构
-    mysql_cmd tiktok_mall_test < ../../deploy/docker/mysql/init/init.sql
+    mysql_cmd tiktok_mall_test < "$INIT_SQL"
     
     if [ $? -eq 0 ]; then
         echo -e "${GREEN}测试数据库准备完成${NC}"
@@ -72,8 +79,36 @@ run_tests() {
     export REDIS_ADDR="localhost:6379"
     export REDIS_PASSWORD=""
     
-    # 运行所有测试并生成覆盖率报告
-    go test -v -race -coverprofile=coverage.out ./...
+    echo "检查Redis连接..."
+    if ! redis-cli ping > /dev/null; then
+        echo -e "${RED}错误: 无法连接到Redis${NC}"
+        exit 1
+    fi
+    
+    echo "检查MySQL连接..."
+    if ! mysql_cmd -e "SELECT 1" > /dev/null; then
+        echo -e "${RED}错误: 无法连接到MySQL${NC}"
+        exit 1
+    fi
+    
+    echo "开始运行单元测试..."
+    # 运行每个包的测试，每个包设置15秒超时
+    for pkg in $(go list ./...); do
+        echo "测试包: $pkg"
+        start_time=$(date +%s)
+        if ! go test -v -timeout 15s -race "$pkg" 2>&1 | tee -a test.log; then
+            echo -e "${RED}错误: 包 $pkg 测试失败${NC}"
+            echo "详细日志已保存到: test.log"
+            exit 1
+        fi
+        end_time=$(date +%s)
+        duration=$((end_time - start_time))
+        echo "包 $pkg 测试完成，耗时: ${duration}秒"
+    done
+    
+    # 生成总体覆盖率报告
+    echo "生成覆盖率报告..."
+    go test -coverprofile=coverage.out ./...
     
     if [ $? -eq 0 ]; then
         echo -e "${GREEN}所有测试通过${NC}"
@@ -86,6 +121,7 @@ run_tests() {
         echo "覆盖率报告已生成: coverage.html"
     else
         echo -e "${RED}错误: 测试失败${NC}"
+        echo "详细日志已保存到: test.log"
         exit 1
     fi
 }

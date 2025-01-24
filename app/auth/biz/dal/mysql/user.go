@@ -6,16 +6,21 @@ import (
 	"gorm.io/gorm"
 )
 
-// User 用户模型
+// User represents a user in the system
 type User struct {
-	ID        int64     `gorm:"primaryKey"`
-	Username  string    `gorm:"uniqueIndex;size:64;not null"`
-	Password  string    `gorm:"size:128;not null"`
-	Email     string    `gorm:"size:128;index"`
-	Phone     string    `gorm:"size:20;index"`
-	Status    int8      `gorm:"default:1;not null"` // 1: 正常, 2: 禁用
-	CreatedAt time.Time `gorm:"autoCreateTime"`
-	UpdatedAt time.Time `gorm:"autoUpdateTime"`
+	ID        int64     `gorm:"column:id;primaryKey;autoIncrement"`
+	Username  string    `gorm:"column:username;unique;not null"`
+	Password  string    `gorm:"column:password;not null"`
+	Email     string    `gorm:"column:email"`
+	Phone     string    `gorm:"column:phone"`
+	Status    int       `gorm:"column:status;default:1"`
+	CreatedAt time.Time `gorm:"column:created_at;autoCreateTime"`
+	UpdatedAt time.Time `gorm:"column:updated_at;autoUpdateTime"`
+}
+
+// TableName specifies the table name for User model
+func (User) TableName() string {
+	return "users"
 }
 
 // CreateUser 创建用户

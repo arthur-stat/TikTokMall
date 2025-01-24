@@ -8,9 +8,9 @@ import (
 	"github.com/cloudwego/hertz/pkg/common/hlog"
 	"github.com/hertz-contrib/cors"
 
-	"tiktok-mall/app/auth/biz/dal/mysql"
-	"tiktok-mall/app/auth/biz/dal/redis"
-	"tiktok-mall/app/auth/biz/handler"
+	"TikTokMall/app/auth/biz/dal/mysql"
+	"TikTokMall/app/auth/biz/dal/redis"
+	"TikTokMall/app/auth/biz/handler"
 )
 
 func main() {

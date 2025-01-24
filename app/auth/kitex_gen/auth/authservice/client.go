@@ -11,8 +11,11 @@ import (
 
 // Client is designed to provide IDL-compatible methods with call-option parameter for kitex framework.
 type Client interface {
-	DeliverTokenByRPC(ctx context.Context, Req *auth.DeliverTokenReq, callOptions ...callopt.Option) (r *auth.DeliveryResp, err error)
-	VerifyTokenByRPC(ctx context.Context, Req *auth.VerifyTokenReq, callOptions ...callopt.Option) (r *auth.VerifyResp, err error)
+	Register(ctx context.Context, Req *auth.RegisterRequest, callOptions ...callopt.Option) (r *auth.RegisterResponse, err error)
+	Login(ctx context.Context, Req *auth.LoginRequest, callOptions ...callopt.Option) (r *auth.LoginResponse, err error)
+	RefreshToken(ctx context.Context, Req *auth.RefreshTokenRequest, callOptions ...callopt.Option) (r *auth.RefreshTokenResponse, err error)
+	Logout(ctx context.Context, Req *auth.LogoutRequest, callOptions ...callopt.Option) (r *auth.LogoutResponse, err error)
+	ValidateToken(ctx context.Context, Req *auth.ValidateTokenRequest, callOptions ...callopt.Option) (r *auth.ValidateTokenResponse, err error)
 }
 
 // NewClient creates a client for the service defined in IDL.
@@ -44,12 +47,27 @@ type kAuthServiceClient struct {
 	*kClient
 }
 
-func (p *kAuthServiceClient) DeliverTokenByRPC(ctx context.Context, Req *auth.DeliverTokenReq, callOptions ...callopt.Option) (r *auth.DeliveryResp, err error) {
+func (p *kAuthServiceClient) Register(ctx context.Context, Req *auth.RegisterRequest, callOptions ...callopt.Option) (r *auth.RegisterResponse, err error) {
 	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
-	return p.kClient.DeliverTokenByRPC(ctx, Req)
+	return p.kClient.Register(ctx, Req)
 }
 
-func (p *kAuthServiceClient) VerifyTokenByRPC(ctx context.Context, Req *auth.VerifyTokenReq, callOptions ...callopt.Option) (r *auth.VerifyResp, err error) {
+func (p *kAuthServiceClient) Login(ctx context.Context, Req *auth.LoginRequest, callOptions ...callopt.Option) (r *auth.LoginResponse, err error) {
 	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
-	return p.kClient.VerifyTokenByRPC(ctx, Req)
+	return p.kClient.Login(ctx, Req)
+}
+
+func (p *kAuthServiceClient) RefreshToken(ctx context.Context, Req *auth.RefreshTokenRequest, callOptions ...callopt.Option) (r *auth.RefreshTokenResponse, err error) {
+	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
+	return p.kClient.RefreshToken(ctx, Req)
+}
+
+func (p *kAuthServiceClient) Logout(ctx context.Context, Req *auth.LogoutRequest, callOptions ...callopt.Option) (r *auth.LogoutResponse, err error) {
+	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
+	return p.kClient.Logout(ctx, Req)
+}
+
+func (p *kAuthServiceClient) ValidateToken(ctx context.Context, Req *auth.ValidateTokenRequest, callOptions ...callopt.Option) (r *auth.ValidateTokenResponse, err error) {
+	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
+	return p.kClient.ValidateToken(ctx, Req)
 }

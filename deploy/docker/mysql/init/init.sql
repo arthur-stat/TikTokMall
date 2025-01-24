@@ -1,6 +1,8 @@
--- 创建数据库
-CREATE DATABASE IF NOT EXISTS tiktok_mall;
-USE tiktok_mall;
+-- 根据环境变量选择数据库
+SET @db_name = IFNULL(@db_name, 'tiktok_mall');
+CREATE DATABASE IF NOT EXISTS `tiktok_mall_test`;
+
+USE `tiktok_mall_test`;
 
 -- 用户服务相关表
 CREATE TABLE IF NOT EXISTS `users` (

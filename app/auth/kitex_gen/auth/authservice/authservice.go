@@ -15,17 +15,38 @@ import (
 var errInvalidMessageType = errors.New("invalid message type for service method handler")
 
 var serviceMethods = map[string]kitex.MethodInfo{
-	"DeliverTokenByRPC": kitex.NewMethodInfo(
-		deliverTokenByRPCHandler,
-		newDeliverTokenByRPCArgs,
-		newDeliverTokenByRPCResult,
+	"Register": kitex.NewMethodInfo(
+		registerHandler,
+		newRegisterArgs,
+		newRegisterResult,
 		false,
 		kitex.WithStreamingMode(kitex.StreamingUnary),
 	),
-	"VerifyTokenByRPC": kitex.NewMethodInfo(
-		verifyTokenByRPCHandler,
-		newVerifyTokenByRPCArgs,
-		newVerifyTokenByRPCResult,
+	"Login": kitex.NewMethodInfo(
+		loginHandler,
+		newLoginArgs,
+		newLoginResult,
+		false,
+		kitex.WithStreamingMode(kitex.StreamingUnary),
+	),
+	"RefreshToken": kitex.NewMethodInfo(
+		refreshTokenHandler,
+		newRefreshTokenArgs,
+		newRefreshTokenResult,
+		false,
+		kitex.WithStreamingMode(kitex.StreamingUnary),
+	),
+	"Logout": kitex.NewMethodInfo(
+		logoutHandler,
+		newLogoutArgs,
+		newLogoutResult,
+		false,
+		kitex.WithStreamingMode(kitex.StreamingUnary),
+	),
+	"ValidateToken": kitex.NewMethodInfo(
+		validateTokenHandler,
+		newValidateTokenArgs,
+		newValidateTokenResult,
 		false,
 		kitex.WithStreamingMode(kitex.StreamingUnary),
 	),
@@ -95,73 +116,73 @@ func newServiceInfo(hasStreaming bool, keepStreamingMethods bool, keepNonStreami
 	return svcInfo
 }
 
-func deliverTokenByRPCHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+func registerHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
 	switch s := arg.(type) {
 	case *streaming.Args:
 		st := s.Stream
-		req := new(auth.DeliverTokenReq)
+		req := new(auth.RegisterRequest)
 		if err := st.RecvMsg(req); err != nil {
 			return err
 		}
-		resp, err := handler.(auth.AuthService).DeliverTokenByRPC(ctx, req)
+		resp, err := handler.(auth.AuthService).Register(ctx, req)
 		if err != nil {
 			return err
 		}
 		return st.SendMsg(resp)
-	case *DeliverTokenByRPCArgs:
-		success, err := handler.(auth.AuthService).DeliverTokenByRPC(ctx, s.Req)
+	case *RegisterArgs:
+		success, err := handler.(auth.AuthService).Register(ctx, s.Req)
 		if err != nil {
 			return err
 		}
-		realResult := result.(*DeliverTokenByRPCResult)
+		realResult := result.(*RegisterResult)
 		realResult.Success = success
 		return nil
 	default:
 		return errInvalidMessageType
 	}
 }
-func newDeliverTokenByRPCArgs() interface{} {
-	return &DeliverTokenByRPCArgs{}
+func newRegisterArgs() interface{} {
+	return &RegisterArgs{}
 }
 
-func newDeliverTokenByRPCResult() interface{} {
-	return &DeliverTokenByRPCResult{}
+func newRegisterResult() interface{} {
+	return &RegisterResult{}
 }
 
-type DeliverTokenByRPCArgs struct {
-	Req *auth.DeliverTokenReq
+type RegisterArgs struct {
+	Req *auth.RegisterRequest
 }
 
-func (p *DeliverTokenByRPCArgs) FastRead(buf []byte, _type int8, number int32) (n int, err error) {
+func (p *RegisterArgs) FastRead(buf []byte, _type int8, number int32) (n int, err error) {
 	if !p.IsSetReq() {
-		p.Req = new(auth.DeliverTokenReq)
+		p.Req = new(auth.RegisterRequest)
 	}
 	return p.Req.FastRead(buf, _type, number)
 }
 
-func (p *DeliverTokenByRPCArgs) FastWrite(buf []byte) (n int) {
+func (p *RegisterArgs) FastWrite(buf []byte) (n int) {
 	if !p.IsSetReq() {
 		return 0
 	}
 	return p.Req.FastWrite(buf)
 }
 
-func (p *DeliverTokenByRPCArgs) Size() (n int) {
+func (p *RegisterArgs) Size() (n int) {
 	if !p.IsSetReq() {
 		return 0
 	}
 	return p.Req.Size()
 }
 
-func (p *DeliverTokenByRPCArgs) Marshal(out []byte) ([]byte, error) {
+func (p *RegisterArgs) Marshal(out []byte) ([]byte, error) {
 	if !p.IsSetReq() {
 		return out, nil
 	}
 	return proto.Marshal(p.Req)
 }
 
-func (p *DeliverTokenByRPCArgs) Unmarshal(in []byte) error {
-	msg := new(auth.DeliverTokenReq)
+func (p *RegisterArgs) Unmarshal(in []byte) error {
+	msg := new(auth.RegisterRequest)
 	if err := proto.Unmarshal(in, msg); err != nil {
 		return err
 	}
@@ -169,59 +190,59 @@ func (p *DeliverTokenByRPCArgs) Unmarshal(in []byte) error {
 	return nil
 }
 
-var DeliverTokenByRPCArgs_Req_DEFAULT *auth.DeliverTokenReq
+var RegisterArgs_Req_DEFAULT *auth.RegisterRequest
 
-func (p *DeliverTokenByRPCArgs) GetReq() *auth.DeliverTokenReq {
+func (p *RegisterArgs) GetReq() *auth.RegisterRequest {
 	if !p.IsSetReq() {
-		return DeliverTokenByRPCArgs_Req_DEFAULT
+		return RegisterArgs_Req_DEFAULT
 	}
 	return p.Req
 }
 
-func (p *DeliverTokenByRPCArgs) IsSetReq() bool {
+func (p *RegisterArgs) IsSetReq() bool {
 	return p.Req != nil
 }
 
-func (p *DeliverTokenByRPCArgs) GetFirstArgument() interface{} {
+func (p *RegisterArgs) GetFirstArgument() interface{} {
 	return p.Req
 }
 
-type DeliverTokenByRPCResult struct {
-	Success *auth.DeliveryResp
+type RegisterResult struct {
+	Success *auth.RegisterResponse
 }
 
-var DeliverTokenByRPCResult_Success_DEFAULT *auth.DeliveryResp
+var RegisterResult_Success_DEFAULT *auth.RegisterResponse
 
-func (p *DeliverTokenByRPCResult) FastRead(buf []byte, _type int8, number int32) (n int, err error) {
+func (p *RegisterResult) FastRead(buf []byte, _type int8, number int32) (n int, err error) {
 	if !p.IsSetSuccess() {
-		p.Success = new(auth.DeliveryResp)
+		p.Success = new(auth.RegisterResponse)
 	}
 	return p.Success.FastRead(buf, _type, number)
 }
 
-func (p *DeliverTokenByRPCResult) FastWrite(buf []byte) (n int) {
+func (p *RegisterResult) FastWrite(buf []byte) (n int) {
 	if !p.IsSetSuccess() {
 		return 0
 	}
 	return p.Success.FastWrite(buf)
 }
 
-func (p *DeliverTokenByRPCResult) Size() (n int) {
+func (p *RegisterResult) Size() (n int) {
 	if !p.IsSetSuccess() {
 		return 0
 	}
 	return p.Success.Size()
 }
 
-func (p *DeliverTokenByRPCResult) Marshal(out []byte) ([]byte, error) {
+func (p *RegisterResult) Marshal(out []byte) ([]byte, error) {
 	if !p.IsSetSuccess() {
 		return out, nil
 	}
 	return proto.Marshal(p.Success)
 }
 
-func (p *DeliverTokenByRPCResult) Unmarshal(in []byte) error {
-	msg := new(auth.DeliveryResp)
+func (p *RegisterResult) Unmarshal(in []byte) error {
+	msg := new(auth.RegisterResponse)
 	if err := proto.Unmarshal(in, msg); err != nil {
 		return err
 	}
@@ -229,92 +250,92 @@ func (p *DeliverTokenByRPCResult) Unmarshal(in []byte) error {
 	return nil
 }
 
-func (p *DeliverTokenByRPCResult) GetSuccess() *auth.DeliveryResp {
+func (p *RegisterResult) GetSuccess() *auth.RegisterResponse {
 	if !p.IsSetSuccess() {
-		return DeliverTokenByRPCResult_Success_DEFAULT
+		return RegisterResult_Success_DEFAULT
 	}
 	return p.Success
 }
 
-func (p *DeliverTokenByRPCResult) SetSuccess(x interface{}) {
-	p.Success = x.(*auth.DeliveryResp)
+func (p *RegisterResult) SetSuccess(x interface{}) {
+	p.Success = x.(*auth.RegisterResponse)
 }
 
-func (p *DeliverTokenByRPCResult) IsSetSuccess() bool {
+func (p *RegisterResult) IsSetSuccess() bool {
 	return p.Success != nil
 }
 
-func (p *DeliverTokenByRPCResult) GetResult() interface{} {
+func (p *RegisterResult) GetResult() interface{} {
 	return p.Success
 }
 
-func verifyTokenByRPCHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+func loginHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
 	switch s := arg.(type) {
 	case *streaming.Args:
 		st := s.Stream
-		req := new(auth.VerifyTokenReq)
+		req := new(auth.LoginRequest)
 		if err := st.RecvMsg(req); err != nil {
 			return err
 		}
-		resp, err := handler.(auth.AuthService).VerifyTokenByRPC(ctx, req)
+		resp, err := handler.(auth.AuthService).Login(ctx, req)
 		if err != nil {
 			return err
 		}
 		return st.SendMsg(resp)
-	case *VerifyTokenByRPCArgs:
-		success, err := handler.(auth.AuthService).VerifyTokenByRPC(ctx, s.Req)
+	case *LoginArgs:
+		success, err := handler.(auth.AuthService).Login(ctx, s.Req)
 		if err != nil {
 			return err
 		}
-		realResult := result.(*VerifyTokenByRPCResult)
+		realResult := result.(*LoginResult)
 		realResult.Success = success
 		return nil
 	default:
 		return errInvalidMessageType
 	}
 }
-func newVerifyTokenByRPCArgs() interface{} {
-	return &VerifyTokenByRPCArgs{}
+func newLoginArgs() interface{} {
+	return &LoginArgs{}
 }
 
-func newVerifyTokenByRPCResult() interface{} {
-	return &VerifyTokenByRPCResult{}
+func newLoginResult() interface{} {
+	return &LoginResult{}
 }
 
-type VerifyTokenByRPCArgs struct {
-	Req *auth.VerifyTokenReq
+type LoginArgs struct {
+	Req *auth.LoginRequest
 }
 
-func (p *VerifyTokenByRPCArgs) FastRead(buf []byte, _type int8, number int32) (n int, err error) {
+func (p *LoginArgs) FastRead(buf []byte, _type int8, number int32) (n int, err error) {
 	if !p.IsSetReq() {
-		p.Req = new(auth.VerifyTokenReq)
+		p.Req = new(auth.LoginRequest)
 	}
 	return p.Req.FastRead(buf, _type, number)
 }
 
-func (p *VerifyTokenByRPCArgs) FastWrite(buf []byte) (n int) {
+func (p *LoginArgs) FastWrite(buf []byte) (n int) {
 	if !p.IsSetReq() {
 		return 0
 	}
 	return p.Req.FastWrite(buf)
 }
 
-func (p *VerifyTokenByRPCArgs) Size() (n int) {
+func (p *LoginArgs) Size() (n int) {
 	if !p.IsSetReq() {
 		return 0
 	}
 	return p.Req.Size()
 }
 
-func (p *VerifyTokenByRPCArgs) Marshal(out []byte) ([]byte, error) {
+func (p *LoginArgs) Marshal(out []byte) ([]byte, error) {
 	if !p.IsSetReq() {
 		return out, nil
 	}
 	return proto.Marshal(p.Req)
 }
 
-func (p *VerifyTokenByRPCArgs) Unmarshal(in []byte) error {
-	msg := new(auth.VerifyTokenReq)
+func (p *LoginArgs) Unmarshal(in []byte) error {
+	msg := new(auth.LoginRequest)
 	if err := proto.Unmarshal(in, msg); err != nil {
 		return err
 	}
@@ -322,59 +343,59 @@ func (p *VerifyTokenByRPCArgs) Unmarshal(in []byte) error {
 	return nil
 }
 
-var VerifyTokenByRPCArgs_Req_DEFAULT *auth.VerifyTokenReq
+var LoginArgs_Req_DEFAULT *auth.LoginRequest
 
-func (p *VerifyTokenByRPCArgs) GetReq() *auth.VerifyTokenReq {
+func (p *LoginArgs) GetReq() *auth.LoginRequest {
 	if !p.IsSetReq() {
-		return VerifyTokenByRPCArgs_Req_DEFAULT
+		return LoginArgs_Req_DEFAULT
 	}
 	return p.Req
 }
 
-func (p *VerifyTokenByRPCArgs) IsSetReq() bool {
+func (p *LoginArgs) IsSetReq() bool {
 	return p.Req != nil
 }
 
-func (p *VerifyTokenByRPCArgs) GetFirstArgument() interface{} {
+func (p *LoginArgs) GetFirstArgument() interface{} {
 	return p.Req
 }
 
-type VerifyTokenByRPCResult struct {
-	Success *auth.VerifyResp
+type LoginResult struct {
+	Success *auth.LoginResponse
 }
 
-var VerifyTokenByRPCResult_Success_DEFAULT *auth.VerifyResp
+var LoginResult_Success_DEFAULT *auth.LoginResponse
 
-func (p *VerifyTokenByRPCResult) FastRead(buf []byte, _type int8, number int32) (n int, err error) {
+func (p *LoginResult) FastRead(buf []byte, _type int8, number int32) (n int, err error) {
 	if !p.IsSetSuccess() {
-		p.Success = new(auth.VerifyResp)
+		p.Success = new(auth.LoginResponse)
 	}
 	return p.Success.FastRead(buf, _type, number)
 }
 
-func (p *VerifyTokenByRPCResult) FastWrite(buf []byte) (n int) {
+func (p *LoginResult) FastWrite(buf []byte) (n int) {
 	if !p.IsSetSuccess() {
 		return 0
 	}
 	return p.Success.FastWrite(buf)
 }
 
-func (p *VerifyTokenByRPCResult) Size() (n int) {
+func (p *LoginResult) Size() (n int) {
 	if !p.IsSetSuccess() {
 		return 0
 	}
 	return p.Success.Size()
 }
 
-func (p *VerifyTokenByRPCResult) Marshal(out []byte) ([]byte, error) {
+func (p *LoginResult) Marshal(out []byte) ([]byte, error) {
 	if !p.IsSetSuccess() {
 		return out, nil
 	}
 	return proto.Marshal(p.Success)
 }
 
-func (p *VerifyTokenByRPCResult) Unmarshal(in []byte) error {
-	msg := new(auth.VerifyResp)
+func (p *LoginResult) Unmarshal(in []byte) error {
+	msg := new(auth.LoginResponse)
 	if err := proto.Unmarshal(in, msg); err != nil {
 		return err
 	}
@@ -382,22 +403,481 @@ func (p *VerifyTokenByRPCResult) Unmarshal(in []byte) error {
 	return nil
 }
 
-func (p *VerifyTokenByRPCResult) GetSuccess() *auth.VerifyResp {
+func (p *LoginResult) GetSuccess() *auth.LoginResponse {
 	if !p.IsSetSuccess() {
-		return VerifyTokenByRPCResult_Success_DEFAULT
+		return LoginResult_Success_DEFAULT
 	}
 	return p.Success
 }
 
-func (p *VerifyTokenByRPCResult) SetSuccess(x interface{}) {
-	p.Success = x.(*auth.VerifyResp)
+func (p *LoginResult) SetSuccess(x interface{}) {
+	p.Success = x.(*auth.LoginResponse)
 }
 
-func (p *VerifyTokenByRPCResult) IsSetSuccess() bool {
+func (p *LoginResult) IsSetSuccess() bool {
 	return p.Success != nil
 }
 
-func (p *VerifyTokenByRPCResult) GetResult() interface{} {
+func (p *LoginResult) GetResult() interface{} {
+	return p.Success
+}
+
+func refreshTokenHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+	switch s := arg.(type) {
+	case *streaming.Args:
+		st := s.Stream
+		req := new(auth.RefreshTokenRequest)
+		if err := st.RecvMsg(req); err != nil {
+			return err
+		}
+		resp, err := handler.(auth.AuthService).RefreshToken(ctx, req)
+		if err != nil {
+			return err
+		}
+		return st.SendMsg(resp)
+	case *RefreshTokenArgs:
+		success, err := handler.(auth.AuthService).RefreshToken(ctx, s.Req)
+		if err != nil {
+			return err
+		}
+		realResult := result.(*RefreshTokenResult)
+		realResult.Success = success
+		return nil
+	default:
+		return errInvalidMessageType
+	}
+}
+func newRefreshTokenArgs() interface{} {
+	return &RefreshTokenArgs{}
+}
+
+func newRefreshTokenResult() interface{} {
+	return &RefreshTokenResult{}
+}
+
+type RefreshTokenArgs struct {
+	Req *auth.RefreshTokenRequest
+}
+
+func (p *RefreshTokenArgs) FastRead(buf []byte, _type int8, number int32) (n int, err error) {
+	if !p.IsSetReq() {
+		p.Req = new(auth.RefreshTokenRequest)
+	}
+	return p.Req.FastRead(buf, _type, number)
+}
+
+func (p *RefreshTokenArgs) FastWrite(buf []byte) (n int) {
+	if !p.IsSetReq() {
+		return 0
+	}
+	return p.Req.FastWrite(buf)
+}
+
+func (p *RefreshTokenArgs) Size() (n int) {
+	if !p.IsSetReq() {
+		return 0
+	}
+	return p.Req.Size()
+}
+
+func (p *RefreshTokenArgs) Marshal(out []byte) ([]byte, error) {
+	if !p.IsSetReq() {
+		return out, nil
+	}
+	return proto.Marshal(p.Req)
+}
+
+func (p *RefreshTokenArgs) Unmarshal(in []byte) error {
+	msg := new(auth.RefreshTokenRequest)
+	if err := proto.Unmarshal(in, msg); err != nil {
+		return err
+	}
+	p.Req = msg
+	return nil
+}
+
+var RefreshTokenArgs_Req_DEFAULT *auth.RefreshTokenRequest
+
+func (p *RefreshTokenArgs) GetReq() *auth.RefreshTokenRequest {
+	if !p.IsSetReq() {
+		return RefreshTokenArgs_Req_DEFAULT
+	}
+	return p.Req
+}
+
+func (p *RefreshTokenArgs) IsSetReq() bool {
+	return p.Req != nil
+}
+
+func (p *RefreshTokenArgs) GetFirstArgument() interface{} {
+	return p.Req
+}
+
+type RefreshTokenResult struct {
+	Success *auth.RefreshTokenResponse
+}
+
+var RefreshTokenResult_Success_DEFAULT *auth.RefreshTokenResponse
+
+func (p *RefreshTokenResult) FastRead(buf []byte, _type int8, number int32) (n int, err error) {
+	if !p.IsSetSuccess() {
+		p.Success = new(auth.RefreshTokenResponse)
+	}
+	return p.Success.FastRead(buf, _type, number)
+}
+
+func (p *RefreshTokenResult) FastWrite(buf []byte) (n int) {
+	if !p.IsSetSuccess() {
+		return 0
+	}
+	return p.Success.FastWrite(buf)
+}
+
+func (p *RefreshTokenResult) Size() (n int) {
+	if !p.IsSetSuccess() {
+		return 0
+	}
+	return p.Success.Size()
+}
+
+func (p *RefreshTokenResult) Marshal(out []byte) ([]byte, error) {
+	if !p.IsSetSuccess() {
+		return out, nil
+	}
+	return proto.Marshal(p.Success)
+}
+
+func (p *RefreshTokenResult) Unmarshal(in []byte) error {
+	msg := new(auth.RefreshTokenResponse)
+	if err := proto.Unmarshal(in, msg); err != nil {
+		return err
+	}
+	p.Success = msg
+	return nil
+}
+
+func (p *RefreshTokenResult) GetSuccess() *auth.RefreshTokenResponse {
+	if !p.IsSetSuccess() {
+		return RefreshTokenResult_Success_DEFAULT
+	}
+	return p.Success
+}
+
+func (p *RefreshTokenResult) SetSuccess(x interface{}) {
+	p.Success = x.(*auth.RefreshTokenResponse)
+}
+
+func (p *RefreshTokenResult) IsSetSuccess() bool {
+	return p.Success != nil
+}
+
+func (p *RefreshTokenResult) GetResult() interface{} {
+	return p.Success
+}
+
+func logoutHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+	switch s := arg.(type) {
+	case *streaming.Args:
+		st := s.Stream
+		req := new(auth.LogoutRequest)
+		if err := st.RecvMsg(req); err != nil {
+			return err
+		}
+		resp, err := handler.(auth.AuthService).Logout(ctx, req)
+		if err != nil {
+			return err
+		}
+		return st.SendMsg(resp)
+	case *LogoutArgs:
+		success, err := handler.(auth.AuthService).Logout(ctx, s.Req)
+		if err != nil {
+			return err
+		}
+		realResult := result.(*LogoutResult)
+		realResult.Success = success
+		return nil
+	default:
+		return errInvalidMessageType
+	}
+}
+func newLogoutArgs() interface{} {
+	return &LogoutArgs{}
+}
+
+func newLogoutResult() interface{} {
+	return &LogoutResult{}
+}
+
+type LogoutArgs struct {
+	Req *auth.LogoutRequest
+}
+
+func (p *LogoutArgs) FastRead(buf []byte, _type int8, number int32) (n int, err error) {
+	if !p.IsSetReq() {
+		p.Req = new(auth.LogoutRequest)
+	}
+	return p.Req.FastRead(buf, _type, number)
+}
+
+func (p *LogoutArgs) FastWrite(buf []byte) (n int) {
+	if !p.IsSetReq() {
+		return 0
+	}
+	return p.Req.FastWrite(buf)
+}
+
+func (p *LogoutArgs) Size() (n int) {
+	if !p.IsSetReq() {
+		return 0
+	}
+	return p.Req.Size()
+}
+
+func (p *LogoutArgs) Marshal(out []byte) ([]byte, error) {
+	if !p.IsSetReq() {
+		return out, nil
+	}
+	return proto.Marshal(p.Req)
+}
+
+func (p *LogoutArgs) Unmarshal(in []byte) error {
+	msg := new(auth.LogoutRequest)
+	if err := proto.Unmarshal(in, msg); err != nil {
+		return err
+	}
+	p.Req = msg
+	return nil
+}
+
+var LogoutArgs_Req_DEFAULT *auth.LogoutRequest
+
+func (p *LogoutArgs) GetReq() *auth.LogoutRequest {
+	if !p.IsSetReq() {
+		return LogoutArgs_Req_DEFAULT
+	}
+	return p.Req
+}
+
+func (p *LogoutArgs) IsSetReq() bool {
+	return p.Req != nil
+}
+
+func (p *LogoutArgs) GetFirstArgument() interface{} {
+	return p.Req
+}
+
+type LogoutResult struct {
+	Success *auth.LogoutResponse
+}
+
+var LogoutResult_Success_DEFAULT *auth.LogoutResponse
+
+func (p *LogoutResult) FastRead(buf []byte, _type int8, number int32) (n int, err error) {
+	if !p.IsSetSuccess() {
+		p.Success = new(auth.LogoutResponse)
+	}
+	return p.Success.FastRead(buf, _type, number)
+}
+
+func (p *LogoutResult) FastWrite(buf []byte) (n int) {
+	if !p.IsSetSuccess() {
+		return 0
+	}
+	return p.Success.FastWrite(buf)
+}
+
+func (p *LogoutResult) Size() (n int) {
+	if !p.IsSetSuccess() {
+		return 0
+	}
+	return p.Success.Size()
+}
+
+func (p *LogoutResult) Marshal(out []byte) ([]byte, error) {
+	if !p.IsSetSuccess() {
+		return out, nil
+	}
+	return proto.Marshal(p.Success)
+}
+
+func (p *LogoutResult) Unmarshal(in []byte) error {
+	msg := new(auth.LogoutResponse)
+	if err := proto.Unmarshal(in, msg); err != nil {
+		return err
+	}
+	p.Success = msg
+	return nil
+}
+
+func (p *LogoutResult) GetSuccess() *auth.LogoutResponse {
+	if !p.IsSetSuccess() {
+		return LogoutResult_Success_DEFAULT
+	}
+	return p.Success
+}
+
+func (p *LogoutResult) SetSuccess(x interface{}) {
+	p.Success = x.(*auth.LogoutResponse)
+}
+
+func (p *LogoutResult) IsSetSuccess() bool {
+	return p.Success != nil
+}
+
+func (p *LogoutResult) GetResult() interface{} {
+	return p.Success
+}
+
+func validateTokenHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+	switch s := arg.(type) {
+	case *streaming.Args:
+		st := s.Stream
+		req := new(auth.ValidateTokenRequest)
+		if err := st.RecvMsg(req); err != nil {
+			return err
+		}
+		resp, err := handler.(auth.AuthService).ValidateToken(ctx, req)
+		if err != nil {
+			return err
+		}
+		return st.SendMsg(resp)
+	case *ValidateTokenArgs:
+		success, err := handler.(auth.AuthService).ValidateToken(ctx, s.Req)
+		if err != nil {
+			return err
+		}
+		realResult := result.(*ValidateTokenResult)
+		realResult.Success = success
+		return nil
+	default:
+		return errInvalidMessageType
+	}
+}
+func newValidateTokenArgs() interface{} {
+	return &ValidateTokenArgs{}
+}
+
+func newValidateTokenResult() interface{} {
+	return &ValidateTokenResult{}
+}
+
+type ValidateTokenArgs struct {
+	Req *auth.ValidateTokenRequest
+}
+
+func (p *ValidateTokenArgs) FastRead(buf []byte, _type int8, number int32) (n int, err error) {
+	if !p.IsSetReq() {
+		p.Req = new(auth.ValidateTokenRequest)
+	}
+	return p.Req.FastRead(buf, _type, number)
+}
+
+func (p *ValidateTokenArgs) FastWrite(buf []byte) (n int) {
+	if !p.IsSetReq() {
+		return 0
+	}
+	return p.Req.FastWrite(buf)
+}
+
+func (p *ValidateTokenArgs) Size() (n int) {
+	if !p.IsSetReq() {
+		return 0
+	}
+	return p.Req.Size()
+}
+
+func (p *ValidateTokenArgs) Marshal(out []byte) ([]byte, error) {
+	if !p.IsSetReq() {
+		return out, nil
+	}
+	return proto.Marshal(p.Req)
+}
+
+func (p *ValidateTokenArgs) Unmarshal(in []byte) error {
+	msg := new(auth.ValidateTokenRequest)
+	if err := proto.Unmarshal(in, msg); err != nil {
+		return err
+	}
+	p.Req = msg
+	return nil
+}
+
+var ValidateTokenArgs_Req_DEFAULT *auth.ValidateTokenRequest
+
+func (p *ValidateTokenArgs) GetReq() *auth.ValidateTokenRequest {
+	if !p.IsSetReq() {
+		return ValidateTokenArgs_Req_DEFAULT
+	}
+	return p.Req
+}
+
+func (p *ValidateTokenArgs) IsSetReq() bool {
+	return p.Req != nil
+}
+
+func (p *ValidateTokenArgs) GetFirstArgument() interface{} {
+	return p.Req
+}
+
+type ValidateTokenResult struct {
+	Success *auth.ValidateTokenResponse
+}
+
+var ValidateTokenResult_Success_DEFAULT *auth.ValidateTokenResponse
+
+func (p *ValidateTokenResult) FastRead(buf []byte, _type int8, number int32) (n int, err error) {
+	if !p.IsSetSuccess() {
+		p.Success = new(auth.ValidateTokenResponse)
+	}
+	return p.Success.FastRead(buf, _type, number)
+}
+
+func (p *ValidateTokenResult) FastWrite(buf []byte) (n int) {
+	if !p.IsSetSuccess() {
+		return 0
+	}
+	return p.Success.FastWrite(buf)
+}
+
+func (p *ValidateTokenResult) Size() (n int) {
+	if !p.IsSetSuccess() {
+		return 0
+	}
+	return p.Success.Size()
+}
+
+func (p *ValidateTokenResult) Marshal(out []byte) ([]byte, error) {
+	if !p.IsSetSuccess() {
+		return out, nil
+	}
+	return proto.Marshal(p.Success)
+}
+
+func (p *ValidateTokenResult) Unmarshal(in []byte) error {
+	msg := new(auth.ValidateTokenResponse)
+	if err := proto.Unmarshal(in, msg); err != nil {
+		return err
+	}
+	p.Success = msg
+	return nil
+}
+
+func (p *ValidateTokenResult) GetSuccess() *auth.ValidateTokenResponse {
+	if !p.IsSetSuccess() {
+		return ValidateTokenResult_Success_DEFAULT
+	}
+	return p.Success
+}
+
+func (p *ValidateTokenResult) SetSuccess(x interface{}) {
+	p.Success = x.(*auth.ValidateTokenResponse)
+}
+
+func (p *ValidateTokenResult) IsSetSuccess() bool {
+	return p.Success != nil
+}
+
+func (p *ValidateTokenResult) GetResult() interface{} {
 	return p.Success
 }
 
@@ -411,21 +891,51 @@ func newServiceClient(c client.Client) *kClient {
 	}
 }
 
-func (p *kClient) DeliverTokenByRPC(ctx context.Context, Req *auth.DeliverTokenReq) (r *auth.DeliveryResp, err error) {
-	var _args DeliverTokenByRPCArgs
+func (p *kClient) Register(ctx context.Context, Req *auth.RegisterRequest) (r *auth.RegisterResponse, err error) {
+	var _args RegisterArgs
 	_args.Req = Req
-	var _result DeliverTokenByRPCResult
-	if err = p.c.Call(ctx, "DeliverTokenByRPC", &_args, &_result); err != nil {
+	var _result RegisterResult
+	if err = p.c.Call(ctx, "Register", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
 }
 
-func (p *kClient) VerifyTokenByRPC(ctx context.Context, Req *auth.VerifyTokenReq) (r *auth.VerifyResp, err error) {
-	var _args VerifyTokenByRPCArgs
+func (p *kClient) Login(ctx context.Context, Req *auth.LoginRequest) (r *auth.LoginResponse, err error) {
+	var _args LoginArgs
 	_args.Req = Req
-	var _result VerifyTokenByRPCResult
-	if err = p.c.Call(ctx, "VerifyTokenByRPC", &_args, &_result); err != nil {
+	var _result LoginResult
+	if err = p.c.Call(ctx, "Login", &_args, &_result); err != nil {
+		return
+	}
+	return _result.GetSuccess(), nil
+}
+
+func (p *kClient) RefreshToken(ctx context.Context, Req *auth.RefreshTokenRequest) (r *auth.RefreshTokenResponse, err error) {
+	var _args RefreshTokenArgs
+	_args.Req = Req
+	var _result RefreshTokenResult
+	if err = p.c.Call(ctx, "RefreshToken", &_args, &_result); err != nil {
+		return
+	}
+	return _result.GetSuccess(), nil
+}
+
+func (p *kClient) Logout(ctx context.Context, Req *auth.LogoutRequest) (r *auth.LogoutResponse, err error) {
+	var _args LogoutArgs
+	_args.Req = Req
+	var _result LogoutResult
+	if err = p.c.Call(ctx, "Logout", &_args, &_result); err != nil {
+		return
+	}
+	return _result.GetSuccess(), nil
+}
+
+func (p *kClient) ValidateToken(ctx context.Context, Req *auth.ValidateTokenRequest) (r *auth.ValidateTokenResponse, err error) {
+	var _args ValidateTokenArgs
+	_args.Req = Req
+	var _result ValidateTokenResult
+	if err = p.c.Call(ctx, "ValidateToken", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil

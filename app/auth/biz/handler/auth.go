@@ -7,8 +7,8 @@ import (
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
 
-	"tiktok-mall/app/auth/biz/service"
-	"tiktok-mall/kitex_gen/auth"
+	"TikTokMall/app/auth/biz/service"
+	"TikTokMall/app/auth/kitex_gen/auth"
 )
 
 // AuthHandler 认证服务处理器

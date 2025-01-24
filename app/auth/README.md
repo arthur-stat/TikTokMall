@@ -1,247 +1,228 @@
-# 认证服务实现文档
+# Auth Service Documentation
 
-## 1. 概述
+## 目录
+- [服务概述](#服务概述)
+- [API 接口](#api-接口)
+- [数据模型](#数据模型)
+- [测试说明](#测试说明)
+- [部署指南](#部署指南)
+- [常见问题](#常见问题)
 
-认证服务是TikTokMall项目的核心基础服务之一，负责处理用户认证相关的所有功能，包括用户注册、登录、令牌刷新、登出和令牌验证等操作。
+## 服务概述
 
-## 2. 目录结构
+Auth Service 是 TikTokMall 的认证服务，提供用户注册、登录、令牌管理等功能。主要特性包括：
 
+- 用户注册和登录
+- 访问令牌和刷新令牌管理
+- 登录重试限制
+- 令牌验证和黑名单
+- Redis 缓存支持
+- MySQL 持久化存储
+
+## API 接口
+
+### 1. 用户注册 (Register)
+
+```protobuf
+rpc Register(RegisterRequest) returns (RegisterResponse)
 ```
-app/auth/
-├── biz/
-│   ├── dal/
-│   │   ├── mysql/
-│   │   │   ├── init.go    # MySQL初始化
-│   │   │   ├── user.go    # 用户表操作
-│   │   │   └── token.go   # Token表操作
-│   │   └── redis/
-│   │       ├── init.go    # Redis初始化
-│   │       └── token.go   # Token缓存操作
-│   ├── handler/
-│   │   └── auth.go        # 请求处理层
-│   └── service/
-│       └── auth.go        # 业务逻辑层
-└── README.md              # 本文档
+
+**请求参数：**
+- username: 用户名（必填，长度3-32）
+- password: 密码（必填，长度6-32）
+- email: 邮箱（可选）
+- phone: 手机号（可选）
+
+**响应：**
+- base: 基础响应信息
+- data: 包含用户ID和访问令牌
+
+**示例：**
+```bash
+curl -X POST http://localhost:8888/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "testuser",
+    "password": "password123",
+    "email": "test@example.com",
+    "phone": "13800138000"
+  }'
 ```
 
-## 3. 数据模型
+### 2. 用户登录 (Login)
 
-### 3.1 User表
+```protobuf
+rpc Login(LoginRequest) returns (LoginResponse)
+```
+
+**请求参数：**
+- username: 用户名（必填）
+- password: 密码（必填）
+
+**响应：**
+- base: 基础响应信息
+- data: 包含访问令牌和刷新令牌
+
+**特性：**
+- 登录重试限制（5次/小时）
+- 密码加密存储（bcrypt）
+
+### 3. 刷新令牌 (RefreshToken)
+
+```protobuf
+rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse)
+```
+
+**请求参数：**
+- refresh_token: 刷新令牌（必填）
+
+**响应：**
+- base: 基础响应信息
+- data: 包含新的访问令牌和刷新令牌
+
+### 4. 登出 (Logout)
+
+```protobuf
+rpc Logout(LogoutRequest) returns (LogoutResponse)
+```
+
+**请求参数：**
+- token: 当前访问令牌（必填）
+
+**响应：**
+- base: 基础响应信息
+
+### 5. 验证令牌 (ValidateToken)
+
+```protobuf
+rpc ValidateToken(ValidateTokenRequest) returns (ValidateTokenResponse)
+```
+
+**请求参数：**
+- token: 访问令牌（必填）
+
+**响应：**
+- base: 基础响应信息
+- data: 包含用户ID和用户名
+
+## 数据模型
+
+### User 表
 ```sql
 CREATE TABLE users (
-    id         bigint       NOT NULL AUTO_INCREMENT,
-    username   varchar(64)  NOT NULL,
-    password   varchar(128) NOT NULL,
-    email      varchar(128),
-    phone      varchar(20),
-    status     tinyint     NOT NULL DEFAULT 1,
-    created_at timestamp   NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at timestamp   NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    username VARCHAR(32) NOT NULL,
+    password VARCHAR(60) NOT NULL,
+    email VARCHAR(64),
+    phone VARCHAR(16),
+    status TINYINT NOT NULL DEFAULT 1,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
-    UNIQUE KEY idx_username (username),
-    KEY idx_email (email),
-    KEY idx_phone (phone)
-);
+    UNIQUE KEY uk_username (username),
+    UNIQUE KEY uk_email (email),
+    UNIQUE KEY uk_phone (phone)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ```
 
-### 3.2 Token表
+### Token 表
 ```sql
 CREATE TABLE tokens (
-    id            bigint       NOT NULL AUTO_INCREMENT,
-    user_id       bigint       NOT NULL,
-    token         varchar(512) NOT NULL,
-    refresh_token varchar(512),
-    expired_at    timestamp    NOT NULL,
-    created_at    timestamp    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    user_id BIGINT NOT NULL,
+    token VARCHAR(512) NOT NULL,
+    refresh_token VARCHAR(512),
+    expired_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     KEY idx_user_id (user_id),
     KEY idx_token (token(191)),
     KEY idx_refresh_token (refresh_token(191))
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ```
 
-## 4. 接口实现
+## 测试说明
 
-### 4.1 用户注册 (Register)
-- **接口**: `/v1/auth/register`
-- **方法**: POST
-- **功能**:
-  - 验证用户名、邮箱、手机号唯一性
-  - 密码加密存储
-  - 创建用户记录
-  - 生成访问令牌
-- **安全措施**:
-  - 密码使用bcrypt加密
-  - 用户名长度限制：3-32字符
-  - 密码长度限制：6-32字符
-  - 邮箱格式验证
-  - 手机号格式验证（中国大陆手机号）
+### 运行测试
+```bash
+cd app/auth
+./scripts/test.sh
+```
 
-### 4.2 用户登录 (Login)
-- **接口**: `/v1/auth/login`
-- **方法**: POST
-- **功能**:
-  - 验证用户名和密码
-  - 生成访问令牌和刷新令牌
-  - 记录登录重试次数
-- **安全措施**:
-  - 密码错误次数限制（5次/小时）
-  - 返回统一的错误信息（不区分用户名或密码错误）
-  - 用户状态检查
+测试脚本会：
+1. 检查必要的依赖（MySQL、Redis、Go）
+2. 准备测试数据库环境
+3. 运行单元测试和集成测试
+4. 生成测试覆盖率报告
+5. 清理测试环境
 
-### 4.3 刷新令牌 (RefreshToken)
-- **接口**: `/v1/auth/refresh`
-- **方法**: POST
-- **功能**:
-  - 验证刷新令牌
-  - 生成新的访问令牌和刷新令牌
-  - 使旧令牌失效
-- **安全措施**:
-  - 刷新令牌有效期检查
-  - 旧令牌自动加入黑名单
+### 测试用例说明
 
-### 4.4 用户登出 (Logout)
-- **接口**: `/v1/auth/logout`
-- **方法**: POST
-- **功能**:
-  - 使当前令牌失效
-  - 清理缓存
-- **安全措施**:
-  - 令牌加入黑名单
-  - 同时清理数据库和缓存
+1. **注册测试**
+   - 正常注册
+   - 用户名已存在
+   - 邮箱已存在
+   - 手机号已存在
 
-### 4.5 验证令牌 (ValidateToken)
-- **接口**: `/v1/auth/validate`
-- **方法**: POST
-- **功能**:
-  - 验证令牌有效性
-  - 返回用户信息
-- **安全措施**:
-  - 黑名单检查
-  - 令牌过期检查
-  - 用户状态验证
-
-## 5. 缓存策略
-
-### 5.1 Redis键设计
-- 令牌缓存: `auth:token:{token}`
-- 令牌黑名单: `auth:blacklist:{token}`
-- 登录重试计数: `auth:retry:{username}`
-
-### 5.2 缓存时间
-- 访问令牌: 24小时
-- 刷新令牌: 7天
-- 黑名单记录: 与令牌有效期相同
-- 登录重试记录: 1小时
-
-## 6. 安全特性
-
-1. **密码安全**
-   - 使用bcrypt加密存储
-   - 密码强度要求
-   - 统一的错误消息
-
-2. **令牌管理**
-   - 双令牌机制（访问令牌+刷新令牌）
-   - 令牌自动过期
-   - 黑名单机制
-
-3. **访问控制**
+2. **登录测试**
+   - 正常登录
+   - 密码错误
+   - 用户不存在
    - 登录重试限制
-   - 用户状态检查
-   - 令牌有效性验证
 
-4. **数据安全**
-   - 参数验证
-   - SQL注入防护
-   - XSS防护
+3. **令牌测试**
+   - 刷新令牌
+   - 令牌验证
+   - 令牌过期
+   - 令牌黑名单
 
-## 7. 性能优化
+### 测试覆盖率
+当前测试覆盖率：
+- 业务逻辑 (service): 71.1%
+- 数据访问层 (dal): 70%+
+- HTTP处理器 (handler): 需要改进
+- 配置管理 (conf): 需要改进
 
-1. **缓存优化**
-   - 令牌信息缓存
-   - 双写一致性保证
-   - 缓存穿透防护
+## 部署指南
 
-2. **数据库优化**
-   - 合适的索引设计
-   - 连接池管理
-   - 超时控制
+### 环境要求
+- Go 1.20+
+- MySQL 8.0+
+- Redis 6.0+
 
-3. **并发处理**
-   - 连接池配置
-   - 超时设置
-   - 错误处理
+### 配置说明
+环境变量：
+- `MYSQL_HOST`: MySQL 主机地址
+- `MYSQL_PORT`: MySQL 端口
+- `MYSQL_USER`: MySQL 用户名
+- `MYSQL_PASSWORD`: MySQL 密码
+- `MYSQL_DATABASE`: 数据库名称
+- `REDIS_ADDR`: Redis 地址
+- `REDIS_PASSWORD`: Redis 密码
+- `REDIS_DB`: Redis 数据库编号
 
-## 8. 错误处理
-
-所有错误响应统一格式：
-```json
-{
-    "base": {
-        "code": <错误码>,
-        "message": "<错误信息>"
-    }
-}
+### 部署步骤
+1. 编译服务
+```bash
+go build -o auth_service
 ```
 
-主要错误码：
-- 400: 请求参数错误
-- 401: 未授权
-- 403: 禁止访问
-- 429: 请求过于频繁
-- 500: 服务器内部错误
+2. 运行服务
+```bash
+./auth_service
+```
 
-## 9. 监控指标
+## 常见问题
 
-1. **业务指标**
-   - 注册成功率
-   - 登录成功率
-   - 令牌刷新率
-   - 活跃用户数
+### 1. 登录重试限制
+Q: 如何重置登录重试次数？
+A: 成功登录后会自动重置，或等待1小时后自动重置。
 
-2. **性能指标**
-   - 接口响应时间
-   - 缓存命中率
-   - 错误率统计
-   - 并发请求数
+### 2. 令牌过期
+Q: 令牌有效期是多久？
+A: 访问令牌24小时，刷新令牌7天。
 
-3. **安全指标**
-   - 登录失败次数
-   - 异常令牌使用
-   - 黑名单命中率
-
-## 10. 部署说明
-
-1. **环境要求**
-   - Go 1.20+
-   - MySQL 8.0+
-   - Redis 6.0+
-
-2. **配置项**
-   - 数据库连接
-   - Redis连接
-   - 令牌配置
-   - 安全参数
-
-3. **启动步骤**
-   - 初始化数据库
-   - 配置环境变量
-   - 启动服务
-
-## 11. 后续优化计划
-
-1. **功能优化**
-   - 添加OAuth2.0支持
-   - 实现手机号验证码登录
-   - 添加用户角色权限
-
-2. **性能优化**
-   - 引入分布式缓存
-   - 优化数据库查询
-   - 添加请求限流
-
-3. **安全加强**
-   - 实现IP限制
-   - 添加设备指纹
-   - 风控系统集成 
+### 3. 性能优化
+- 使用 Redis 缓存令牌信息
+- 定期清理过期令牌
+- 使用令牌黑名单机制 

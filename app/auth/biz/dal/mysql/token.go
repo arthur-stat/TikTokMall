@@ -8,12 +8,17 @@ import (
 
 // Token 令牌模型
 type Token struct {
-	ID           int64     `gorm:"primaryKey"`
-	UserID       int64     `gorm:"index;not null"`
-	Token        string    `gorm:"size:512;not null;index"`
-	RefreshToken string    `gorm:"size:512;index"`
-	ExpiredAt    time.Time `gorm:"not null"`
-	CreatedAt    time.Time `gorm:"autoCreateTime"`
+	ID           int64     `gorm:"column:id;primaryKey;autoIncrement"`
+	UserID       int64     `gorm:"column:user_id;index;not null"`
+	Token        string    `gorm:"column:token;size:512;not null;index"`
+	RefreshToken string    `gorm:"column:refresh_token;size:512;index"`
+	ExpiredAt    time.Time `gorm:"column:expired_at;not null"`
+	CreatedAt    time.Time `gorm:"column:created_at;autoCreateTime"`
+}
+
+// TableName specifies the table name for Token model
+func (Token) TableName() string {
+	return "tokens"
 }
 
 // CreateToken 创建Token记录
