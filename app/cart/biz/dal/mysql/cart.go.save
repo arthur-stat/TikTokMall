@@ -1,0 +1,127 @@
+^C
+chmod +x app/cart/scripts/test.sh
+^C
+echo "20031010" | sudo -S service mysql start
+^C
+echo "20031010" | sudo -S service mysql status
+^C
+echo "20031010" | sudo -S mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'root';"
+^C
+cd app/cart && ./scripts/test.sh
+^C
+echo "20031010" | sudo -S systemctl start mysql
+^C
+echo "20031010" | sudo -S systemctl status mysql
+^C
+cd deploy/docker && docker-compose up -d mysql
+^C
+docker exec -it mysql mysql -uroot -p123456 -e "CREATE DATABASE IF NOT EXISTS tiktok_mall_test;"
+^C
+docker ps | grep mysql
+^C
+cd deploy/docker && docker-compose up -d
+^C
+docker-compose ps
+^C
+cd /home/dylan/code/TikTokMall_branch/deploy/docker && docker-compose ps
+^C
+cd /home/dylan/code/TikTokMall_branch/deploy/docker && docker-compose up -d
+^C
+cd /home/dylan/code/TikTokMall_branch/deploy/docker && docker-compose ps
+^C
+ls -l /home/dylan/code/TikTokMall_branch/deploy/docker/mysql/init/init.sql
+^C
+echo "20031010" | sudo -S su - dylan -c 'cd /home/dylan/code/TikTokMall_branch && touch app/cart/biz/service/cart_test.go app/cart/biz/dal/mysql/cart_test.go app/cart/biz/dal/redis/cart_test.go'
+^C
+echo "20031010" | sudo -S chown dylan:dylan app/cart/biz/service/cart_test.go app/cart/biz/dal/mysql/cart_test.go app/cart/biz/dal/redis/cart_test.go && echo "20031010" | sudo -S chmod 644 app/cart/biz/service/cart_test.go app/cart/biz/dal/mysql/cart_test.go app/cart/biz/dal/redis/cart_test.go
+^C
+echo "20031010" | sudo -S chown -R dylan:dylan app/cart/
+^C
+which vim
+^C
+echo "package service" | sudo -S tee app/cart/biz/service/cart_test.go
+^C
+whoami && ls -la app/cart/biz/service/
+^C
+echo "20031010" | sudo -S mkdir -p app/cart/biz/service app/cart/biz/dal/mysql app/cart/biz/dal/redis
+^C
+echo "20031010" | sudo -S chown -R dylan:dylan app/cart/
+^C
+echo "20031010" | sudo -S chmod -R 755 app/cart/
+^C
+ls -R app/cart/
+^C
+ls -la app/cart/ && ls -la app/cart/biz/
+^C
+lsof | grep cart
+^C
+echo "20031010" | sudo -S mkdir -p app/cart/biz/{service,dal/{mysql,redis}} && echo "20031010" | sudo -S chown -R dylan:dylan app/cart && echo "20031010" | sudo -S chmod -R 755 app/cart
+^C
+tree app/cart/
+^C
+ls -R app/cart/
+^C
+ls -la /home/dylan/code/TikTokMall_branch/app/cart/
+^C
+pwd
+^C
+whoami
+^C
+echo "20031010" | sudo -S su -
+^C
+id
+^C
+cd /home/dylan/code/TikTokMall_branch && cwgo server --type RPC --idl idl/cart.proto --server_name cart --module TikTokMall/app/cart -I idl
+^C
+cd app/cart && ./scripts/test.sh
+^C
+pwd
+^C
+pwd
+^C
+^C
+^C
+^C
+^C
+^C
+^C
+^C
+^C
+^C
+^C
+^C
+^C
+^C
+^C
+^C
+^C
+^C
+^C
+^C
+^C
+^C
+^C
+^C
+^C
+^C
+^C
+^C
+^C
+^C
+^C
+^C
+^C
+^C
+^C
+^C
+^C
+^C
+^C
+^C
+^C
+^C
+^C
+^C
+^C
+^C
+ 
