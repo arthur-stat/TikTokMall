@@ -2,6 +2,10 @@
 
 TikTokMall 是一个基于字节跳动开源的 CloudWeGo 中间件集合的高性能微服务架构电商后端系统，使用 Go 语言开发，采用 Protocol Buffers 进行服务间通信。
 
+## 开发指南
+```bash
+/docs/development_guide.md
+```
 ## 技术栈
 
 ### 基础框架
