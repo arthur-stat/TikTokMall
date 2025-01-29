@@ -7,6 +7,7 @@
 4. [测试规范](#测试规范)
 5. [部署指南](#部署指南)
 6. [最佳实践](#最佳实践)
+7. [服务注册与发现](#服务注册与发现)
 
 ## 开发流程概述
 
@@ -126,7 +127,6 @@ export REDIS_PORT="6379"
 
 ### 0. 开发前的准备工作
 
-
 1. 检查 Go 语言环境：
 ```bash
 # 在终端中输入：
@@ -160,8 +160,6 @@ redis-cli --version
 #### 0.2 安装缺少的工具
 
 如果上面的检查发现有工具没安装：
-
-
 
 1. 安装 MySQL：
    ```bash
@@ -219,7 +217,132 @@ export REDIS_HOST=127.0.0.1
 export REDIS_PORT=6379
 ```
 
-### 1. 数据存储层设计
+### 1. 服务注册与发现配置
+
+#### 1.1 Consul 简介
+Consul 是我们使用的服务注册与发现中间件,提供以下功能:
+- 服务注册: 服务启动时自动注册到 Consul
+- 健康检查: 定期检查服务是否健康
+- 服务发现: 服务间调用时自动发现目标服务地址
+- 负载均衡: 支持多实例间的负载均衡
+
+#### 1.2 启动 Consul
+```bash
+# 使用 docker-compose 启动
+docker-compose up -d consul
+
+# 检查 Consul 状态
+curl localhost:8500/v1/status/leader
+
+# 访问 Consul UI
+open http://localhost:8500/ui
+```
+
+#### 1.3 Consul 配置
+```yaml
+# conf/conf.yaml
+registry:
+  registry_address: ["localhost:8500"]  # Consul 地址
+  username: ""                          # 认证用户名(可选)
+  password: ""                          # 认证密码(可选)
+```
+
+### 2. 实现服务注册
+
+#### 2.1 HTTP 服务注册 (以 auth 服务为例)
+```go
+// 创建 Consul 注册器
+r, err := consul.NewConsulRegister("localhost:8500")
+if err != nil {
+    hlog.Fatalf("create consul register failed: %v", err)
+}
+
+// 创建 HTTP 服务器并注册到 Consul
+h := server.Default(
+    server.WithHostPorts(":8000"),
+    server.WithRegistry(r, &registry.Info{
+        ServiceName: "auth",
+        Addr:        utils.NewNetAddr("tcp", "localhost:8000"),
+        Weight:      10,
+        Tags:        []string{"auth", "v1"},
+    }),
+)
+```
+
+#### 2.2 RPC 服务注册 (以 cart 服务为例)
+```go
+// 创建 Consul 注册器
+r, err := consul.NewConsulRegister("localhost:8500")
+if err != nil {
+    log.Fatalf("create consul register failed: %v", err)
+}
+
+// 创建 RPC 服务器并注册到 Consul
+addr, _ := net.ResolveTCPAddr("tcp", ":8002")
+svr := cartservice.NewServer(
+    handler.NewCartServiceImpl(),
+    server.WithServiceAddr(addr),
+    server.WithRegistry(r),
+    server.WithServerBasicInfo(&rpcinfo.EndpointBasicInfo{
+        ServiceName: "cart",
+        Tags:        []string{"cart", "v1"},
+    }),
+)
+```
+
+### 3. 实现服务发现
+
+#### 3.1 创建服务发现工具包
+```go
+// pkg/discovery/consul.go
+func GetConsulClient(consulAddr string) ([]client.Option, error) {
+    r, err := consul.NewConsulResolver(consulAddr)
+    if err != nil {
+        return nil, err
+    }
+
+    return []client.Option{
+        client.WithResolver(r),
+        client.WithLoadBalancer(loadbalance.NewWeightedBalancer()),
+    }, nil
+}
+```
+
+#### 3.2 使用服务发现调用其他服务
+```go
+// 创建带服务发现的客户端
+consulOpts, err := discovery.GetConsulClient("localhost:8500")
+if err != nil {
+    return err
+}
+
+// 创建服务客户端 (以 cart 服务为例)
+client, err := cartservice.NewClient("cart", consulOpts...)
+if err != nil {
+    return err
+}
+
+// 调用服务方法
+resp, err := client.GetCart(ctx, req)
+```
+
+### 4. 验证服务注册与发现
+
+#### 4.1 检查服务注册状态
+```bash
+# 通过 API 查看所有服务
+curl localhost:8500/v1/catalog/services
+
+# 查看特定服务的健康状态
+curl localhost:8500/v1/health/service/[service-name]
+```
+
+#### 4.2 常见问题排查
+- 服务注册失败: 检查 Consul 地址和连接
+- 服务发现失败: 确认服务名称和标签是否正确
+- 负载均衡异常: 检查服务权重配置
+
+### 5. 实现数据访问层
 
 在开始开发之前，我们需要了解两个主要的数据存储组件：
 
@@ -404,7 +527,7 @@ func (User) TableName() string {
 
 接下来，我们就可以开始实现具体的业务逻辑了
 
-### 3. 实现业务逻辑
+### 6. 实现业务逻辑
 
 #### 3.1 创建用户操作接口
 
@@ -583,7 +706,7 @@ var (
 
 接下来，我们就要开始实现 RPC 接口，让其他服务能够调用我们的功能了
 
-### 4. 实现 RPC 接口
+### 7. 实现 RPC 接口
 
 RPC接口是服务对外提供的入口，它接收请求并返回响应。
 
@@ -651,7 +774,7 @@ func (s *UserServiceImpl) CreateUser(ctx context.Context, req *user.CreateUserRe
 // ... 实现其他 RPC 方法 ...
 ```
 
-### 5. 编写启动程序
+### 8. 编写启动程序
 
 最后，我们需要编写主程序来启动服务。
 
@@ -699,7 +822,7 @@ func main() {
 }
 ```
 
-### 6. 如何运行和测试
+### 9. 如何运行和测试
 
 1. 确保环境准备好了：
    - MySQL 已经启动
