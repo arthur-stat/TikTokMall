@@ -122,7 +122,7 @@ export REDIS_HOST="127.0.0.1"
 export REDIS_PORT="6379"
 ```
 
-## 服务开发步骤（新手友好版）
+## 服务开发步骤
 
 ### 0. 开发前的准备工作
 
@@ -277,7 +277,7 @@ import (
 var DB *gorm.DB
 
 // Init 初始化数据库连接
-// 这个函数就像是在拨打电话，建立与数据库的连接
+// 这个函数就建立与数据库的连接
 func Init() error {
     // 1. 准备连接信息
     dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
@@ -308,7 +308,7 @@ func Init() error {
     // 一个连接最多重用1小时
     sqlDB.SetConnMaxLifetime(time.Hour)
     
-    // 4. 测试连接（确认电话通了）
+    // 4. 测试连接
     if err := sqlDB.Ping(); err != nil {
         return fmt.Errorf("无法连接数据库: %w", err)
     }
