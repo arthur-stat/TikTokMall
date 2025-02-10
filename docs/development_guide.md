@@ -1012,3 +1012,170 @@ A: 使用 `go mod tidy` 和 `go mod vendor` 管理依赖。
 
 如有问题，请联系：
 - DENGYI：[QQ:212294929, 微信:18375657303] 
+
+## 架构说明
+
+### 1. 服务注册与发现机制
+
+#### 1.1 Consul 服务中心
+Consul 作为服务注册中心，提供以下功能：
+- 服务注册：服务启动时自动注册
+- 健康检查：定期检查服务状态
+- 服务发现：服务间调用时自动发现目标服务
+- 配置中心：统一配置管理
+
+#### 1.2 服务注册流程
+1. 服务启动时注册：
+```go
+// 创建 Consul 注册器
+r, err := consul.NewConsulRegister("localhost:8500")
+if err != nil {
+    log.Fatalf("create consul register failed: %v", err)
+}
+
+// 注册服务
+svr := server.Default(
+    server.WithRegistry(r, &registry.Info{
+        ServiceName: "your-service",
+        Addr:        utils.NewNetAddr("tcp", "localhost:port"),
+        Weight:      10,
+        Tags:        []string{"v1"},
+    }),
+)
+```
+
+#### 1.3 服务发现流程
+1. 创建服务发现客户端：
+```go
+// 获取服务发现客户端选项
+consulOpts, err := discovery.GetConsulClient("localhost:8500")
+if err != nil {
+    return err
+}
+
+// 创建目标服务的客户端
+client, err := targetservice.NewClient(
+    "target-service-name",
+    consulOpts...,
+)
+```
+
+### 2. 微服务通信
+
+#### 2.1 同步通信 (RPC)
+- 使用 Kitex RPC 框架
+- Protocol Buffers 序列化
+- 支持服务发现和负载均衡
+- 示例：
+```go
+// 定义服务接口 (*.proto)
+service UserService {
+    rpc GetUser(GetUserRequest) returns (GetUserResponse);
+}
+
+// 调用服务
+resp, err := client.GetUser(ctx, req)
+```
+
+#### 2.2 异步通信 (消息队列)
+- 使用 Kafka 进行异步通信
+- 适用于：
+  - 事件驱动场景
+  - 需要解耦的业务流程
+  - 削峰填谷
+
+### 3. 数据存储架构
+
+#### 3.1 MySQL
+- 主要用于持久化存储
+- 每个服务独立数据库
+- 使用 GORM 作为 ORM 框架
+- 示例：
+```go
+// 初始化数据库连接
+dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+    user, password, host, port, dbname)
+db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+```
+
+#### 3.2 Redis
+- 用于缓存和会话管理
+- 支持分布式锁
+- 示例：
+```go
+// 初始化 Redis 连接
+rdb := redis.NewClient(&redis.Options{
+    Addr:     "localhost:6379",
+    Password: "",
+    DB:       0,
+})
+```
+
+### 4. 监控和可观测性
+
+#### 4.1 链路追踪 (Jaeger)
+- 分布式追踪系统
+- 监控请求流转
+- 性能分析
+- 示例：
+```go
+// 创建追踪器
+tracer, closer := jaeger.NewTracer(
+    "service-name",
+    jaeger.NewConstSampler(true),
+    jaeger.NewUDPReporter("localhost:6831"),
+)
+defer closer.Close()
+```
+
+#### 4.2 监控指标 (Prometheus)
+- 收集性能指标
+- 支持自定义指标
+- 告警配置
+- 示例：
+```go
+// 注册指标
+requestCounter := prometheus.NewCounterVec(
+    prometheus.CounterOpts{
+        Name: "http_requests_total",
+        Help: "Total number of HTTP requests",
+    },
+    []string{"method", "endpoint"},
+)
+```
+
+#### 4.3 日志管理 (ELK Stack)
+- 统一日志收集
+- 日志分析和检索
+- 可视化展示
+
+### 5. 开发规范
+
+#### 5.1 服务划分原则
+- 单一职责
+- 高内聚低耦合
+- 独立部署
+- 独立数据存储
+
+#### 5.2 接口设计规范
+- 使用 Protocol Buffers 定义接口
+- 版本控制
+- 错误码规范
+- 参数校验
+
+#### 5.3 配置管理
+- 环境隔离
+- 配置中心化
+- 敏感信息加密
+
+### 6. 部署架构
+
+#### 6.1 容器化部署
+- 使用 Docker 容器化
+- Docker Compose 本地开发
+- Kubernetes 生产环境
+
+#### 6.2 CI/CD
+- 自动化构建
+- 自动化测试
+- 自动化部署
