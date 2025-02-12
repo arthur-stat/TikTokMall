@@ -22,8 +22,9 @@ message CreditCardInfo {
 message ChargeReq {
   float amount = 1 [(api.body) = "amount"];
   CreditCardInfo credit_card = 2 [(api.body) = "credit_card"];
-  string order_id = 3 [(api.body) = "order_id"];
-  uint32 user_id = 4 [(api.body) = "user_id"];
+  string payment_method = 5 [(api.body) = "payment_method"];
+  int64 order_id = 3 [(api.body) = "order_id"];
+  int64 user_id = 4 [(api.body) = "user_id"];
 }
 
 message ChargeResp {

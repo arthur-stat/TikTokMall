@@ -91,6 +91,7 @@ CREATE TABLE IF NOT EXISTS `order_items` (
 CREATE TABLE IF NOT EXISTS `payments` (
     `id` bigint NOT NULL AUTO_INCREMENT,
     `order_id` bigint NOT NULL,
+    `user_id` bigint NOT NULL,
     `amount` decimal(10,2) NOT NULL,
     `status` tinyint NOT NULL DEFAULT 1,
     `payment_method` varchar(32) NOT NULL,
@@ -99,5 +100,6 @@ CREATE TABLE IF NOT EXISTS `payments` (
     `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     UNIQUE KEY `idx_order_id` (`order_id`),
-    KEY `idx_transaction_id` (`transaction_id`)
+    UNIQUE KEY `idx_transaction_id` (`transaction_id`),
+    KEY `idx_user_id` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci; 

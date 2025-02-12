@@ -5,7 +5,12 @@ import (
 	"TikTokMall/app/payment/biz/dal/redis"
 )
 
-func Init() {
-	redis.Init()
-	mysql.Init()
+func Init() error {
+	if err := redis.Init(); err != nil {
+		return err
+	}
+	if err := mysql.Init(); err != nil {
+		return err
+	}
+	return nil
 }
