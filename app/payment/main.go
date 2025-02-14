@@ -1,19 +1,93 @@
 package main
 
 import (
-	"log"
-
 	"TikTokMall/app/payment/handler"
 	"TikTokMall/app/payment/kitex_gen/payment/paymentservice"
+	"github.com/cloudwego/hertz/pkg/app/server"
+	"github.com/hashicorp/consul/api"
+	"log"
+	"sync"
 )
 
+// HealthHandler 用于返回健康检查结果
+//func HealthHandler(c *app.RequestContext) {
+//
+//}
+
 func main() {
+	// 创建一个 WaitGroup 来等待所有 goroutines 完成
+	var wg sync.WaitGroup
+
+	// 增加计数
+	wg.Add(1)
 	// 创建支付服务的 handler 实例
 	svr := paymentservice.NewServer(handler.NewPaymentServiceImpl())
 
 	// 启动服务
-	err := svr.Run()
+	go func() {
+		defer wg.Done() // 服务运行完毕后减少计数
+		err := svr.Run()
+		if err != nil {
+			log.Println("Payment service run error:", err.Error())
+		}
+	}()
+
+	// 启动 HTTP 服务
+	go startHTTPServer()
+
+	// 启动Consul客户端并注册服务
+	err := registerServiceToConsul("payment", "localhost", 8005, "http")
 	if err != nil {
-		log.Println("Payment service run error:", err.Error())
+		log.Fatalf("Failed to register service to Consul: %v", err)
 	}
+
+	// 等待所有 goroutines 完成
+	wg.Wait()
+}
+
+// startHTTPServer 启动 HTTP 服务
+func startHTTPServer() {
+	h := server.Default(
+		server.WithHostPorts(":8005"),
+	)
+	//h.GET("/health", HealthHandler)
+	h.POST("/payment", handler.PaymentHandler)
+	err := h.Run()
+	if err != nil {
+		log.Fatalf("Failed to start HTTP server: %v", err)
+	}
+}
+
+// registerServiceToConsul 将服务注册到 Consul
+func registerServiceToConsul(serviceName, host string, port int, protocol string) error {
+	// 创建Consul客户端
+	config := &api.Config{
+		Address: "localhost:8500", // Consul地址
+	}
+	client, err := api.NewClient(config)
+	if err != nil {
+		return err
+	}
+
+	// 注册服务到 Consul
+	registration := &api.AgentServiceRegistration{
+		ID:      serviceName,        // 服务ID
+		Name:    serviceName,        // 服务名称
+		Address: host,               // 服务地址
+		Port:    port,               // 服务端口
+		Tags:    []string{protocol}, // 服务协议类型
+		Check: &api.AgentServiceCheck{ // 健康检查配置
+			HTTP:     "http://localhost:8005/health", // 健康检查路径
+			Interval: "10s",                          // 健康检查时间间隔
+		},
+	}
+
+	// 注册服务到Consul
+	err = client.Agent().ServiceRegister(registration)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("Service %s registered successfully", serviceName)
+	return nil
 }

@@ -2,10 +2,13 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	kkerrors "github.com/cloudwego/kitex/pkg/kerrors"
+	"net/http"
 
 	"TikTokMall/app/payment/biz/service"
 	payment "TikTokMall/app/payment/kitex_gen/payment"
+	"github.com/cloudwego/hertz/pkg/app"
 )
 
 // PaymentServiceImpl 实现了支付服务接口
@@ -37,4 +40,31 @@ func (s *PaymentServiceImpl) Charge(ctx context.Context, req *payment.ChargeReq)
 
 	// 返回响应数据
 	return resp, nil
+}
+
+// PaymentHandler 处理支付请求的 HTTP 路由
+func PaymentHandler(c context.Context, ctx *app.RequestContext) {
+	// 从请求中解析支付请求参数
+	var req payment.ChargeReq
+	if err := ctx.Bind(&req); err != nil {
+		// 如果绑定失败，返回 400 错误
+		ctx.JSON(http.StatusBadRequest, map[string]string{
+			"error": "Invalid request format",
+		})
+		return
+	}
+
+	// 调用业务层的 Charge 方法处理请求
+	paymentService := NewPaymentServiceImpl()
+	resp, err := paymentService.Charge(c, &req)
+	if err != nil {
+		// 如果发生错误，返回 500 错误
+		ctx.JSON(http.StatusInternalServerError, map[string]string{
+			"error": fmt.Sprintf("Failed to process payment: %v", err),
+		})
+		return
+	}
+
+	// 返回成功响应
+	ctx.JSON(http.StatusOK, resp)
 }
