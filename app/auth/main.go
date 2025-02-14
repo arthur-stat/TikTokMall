@@ -4,13 +4,17 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/cloudwego/hertz/pkg/app/middlewares/server/recovery"
 	"github.com/cloudwego/hertz/pkg/app/server"
 	"github.com/cloudwego/hertz/pkg/common/hlog"
 	"github.com/hertz-contrib/cors"
+	consul "github.com/kitex-contrib/registry-consul"
 
 	"TikTokMall/app/auth/biz/dal/mysql"
 	"TikTokMall/app/auth/biz/dal/redis"
 	"TikTokMall/app/auth/biz/handler"
+	"TikTokMall/app/auth/biz/registry"
+	"TikTokMall/app/auth/biz/utils"
 )
 
 func main() {
@@ -19,9 +23,21 @@ func main() {
 		hlog.Fatalf("init dependencies failed: %v", err)
 	}
 
+	// 创建 Consul 注册器
+	r, err := consul.NewConsulRegister("localhost:8500")
+	if err != nil {
+		hlog.Fatalf("create consul register failed: %v", err)
+	}
+
 	// 创建HTTP服务器
 	h := server.Default(
 		server.WithHostPorts(":8000"),
+		server.WithRegistry(r, &registry.Info{
+			ServiceName: "auth",
+			Addr:        utils.NewNetAddr("tcp", "localhost:8000"),
+			Weight:      10,
+			Tags:        []string{"auth", "v1"},
+		}),
 	)
 
 	// 添加CORS中间件
@@ -31,6 +47,9 @@ func main() {
 		AllowHeaders: []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		MaxAge:       3600,
 	}))
+
+	// 添加恢复中间件
+	h.Use(recovery.Recovery())
 
 	// 创建处理器
 	authHandler := handler.NewAuthHandler()
