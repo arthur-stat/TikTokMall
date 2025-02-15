@@ -11,11 +11,6 @@ import (
 	"sync"
 )
 
-// HealthHandler 用于返回健康检查结果
-//func HealthHandler(c *app.RequestContext) {
-//
-//}
-
 func main() {
 	// 创建一个 WaitGroup 来等待所有 goroutines 完成
 	var wg sync.WaitGroup
@@ -60,7 +55,7 @@ func startHTTPServer() {
 	h := server.Default(
 		server.WithHostPorts(":8005"),
 	)
-	//h.GET("/health", HealthHandler)
+	h.GET("/health", handler.HealthHandler)
 	h.POST("/payment", handler.PaymentHandler)
 	err := h.Run()
 	if err != nil {
