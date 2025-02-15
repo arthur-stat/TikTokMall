@@ -6,10 +6,10 @@ import (
 )
 
 func Init() error {
-	if err := redis.Init(); err != nil {
+	if err := mysql.Init(); err != nil {
 		return err
 	}
-	if err := mysql.Init(); err != nil {
+	if err := redis.Init(); err != nil {
 		return err
 	}
 	return nil

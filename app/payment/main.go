@@ -1,10 +1,12 @@
 package main
 
 import (
+	"TikTokMall/app/payment/biz/dal"
 	"TikTokMall/app/payment/handler"
 	"TikTokMall/app/payment/kitex_gen/payment/paymentservice"
 	"github.com/cloudwego/hertz/pkg/app/server"
 	"github.com/hashicorp/consul/api"
+	"github.com/joho/godotenv"
 	"log"
 	"sync"
 )
@@ -17,6 +19,14 @@ import (
 func main() {
 	// 创建一个 WaitGroup 来等待所有 goroutines 完成
 	var wg sync.WaitGroup
+
+	// 获取环境变量
+	_ = godotenv.Load()
+	// 初始化 Redis 和 MySQL 客户端
+	err := dal.Init()
+	if err != nil {
+		log.Fatalf("Failed to initialize Redis and MySQL: %v", err)
+	}
 
 	// 增加计数
 	wg.Add(1)
@@ -36,7 +46,7 @@ func main() {
 	go startHTTPServer()
 
 	// 启动Consul客户端并注册服务
-	err := registerServiceToConsul("payment", "localhost", 8005, "http")
+	err = registerServiceToConsul("payment", "localhost", 8005, "http")
 	if err != nil {
 		log.Fatalf("Failed to register service to Consul: %v", err)
 	}
