@@ -1,26 +1,67 @@
-# *** Project
+# 支付服务 (Payment Service)
 
-## introduce
+## 介绍
 
-- Use the [Kitex](https://github.com/cloudwego/kitex/) framework
-- Generating the base code for unit tests.
-- Provides basic config functions
-- Provides the most basic MVC code hierarchy.
+支付服务是 TikTokMall 电商平台的核心服务之一，负责处理用户的支付请求、支付状态管理以及退款等相关功能。该服务基于 [Kitex](https://github.com/cloudwego/kitex/) 框架开发，提供了高性能的 RPC 接口，支持分布式部署和服务发现。
 
-## Directory structure
+## 主要功能
 
-|  catalog   | introduce  |
-|  ----  | ----  |
-| conf  | Configuration files |
-| main.go  | Startup file |
-| handler.go  | Used for request processing return of response. |
-| kitex_gen  | kitex generated code |
-| biz/service  | The actual business logic. |
-| biz/dal  | Logic for operating the storage layer |
+- **支付处理**：处理用户的支付请求，支持多种支付方式（如信用卡支付）。
+- **支付状态管理**：记录支付状态，提供支付结果的查询接口。（未完成）
+- **退款管理**：处理用户的退款请求，支持部分退款和全额退款。（未完成）
 
-## How to run
+## 目录结构
 
-```shell
-sh build.sh
-sh output/bootstrap.sh
+| 目录         | 介绍                                                                 |
+|--------------|--------------------------------------------------------------------|
+| `conf`       | 配置文件目录，包含服务的配置信息。                                       |
+| `main.go`    | 服务启动文件，初始化服务并启动 RPC 和 HTTP 服务。                          |
+| `handler`    | 请求处理层，负责接收和处理 RPC 请求，并返回响应。                           |
+| `kitex_gen`  | Kitex 框架自动生成的代码，包含 RPC 接口定义和客户端代码。                    |
+| `biz/service`| 业务逻辑层，实现支付、退款等核心业务逻辑。                                  |
+| `biz/dal`    | 数据访问层，负责与数据库（如 MySQL）和缓存（如 Redis）进行交互。              |
+
+## 依赖项
+
+支付服务依赖以下外部服务和技术栈：
+
+- **MySQL**：用于持久化存储支付记录和交易状态。
+- **Redis**：用于缓存支付结果，提高查询性能。
+- **Consul**：用于服务注册与发现，支持动态服务发现和负载均衡。
+- **Kitex**：高性能 RPC 框架，用于服务间通信。
+- **Hertz**：用于提供 HTTP 接口，支持 RESTful API。
+
+## 如何运行
+
+### 1. 环境配置
+
+确保你已经安装了以下工具和环境：
+
+- Go 1.16 或更高版本
+- MySQL
+- Redis
+- Consul
+- Kitex
+
+### 2. 依赖安装
+
+在项目根目录下执行以下命令来安装依赖：
+
+### 3. 启动服务
+
+由根目录进入项目根目录
+``` bash
+cd app/payment
 ```
+启动前，先确保依赖安装成功
+``` bash
+go mod tidy
+```
+在项目根目录下执行以下命令来启动支付服务
+``` bash
+go run .
+```
+服务启动后，将会在 8885 端口上监听 RPC 请求，
+并在 8005 端口上监听 HTTP 请求。
+
+

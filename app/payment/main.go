@@ -2,13 +2,22 @@ package main
 
 import (
 	"TikTokMall/app/payment/biz/dal"
+	"TikTokMall/app/payment/conf"
 	"TikTokMall/app/payment/handler"
 	"TikTokMall/app/payment/kitex_gen/payment/paymentservice"
-	"github.com/cloudwego/hertz/pkg/app/server"
+	hserver "github.com/cloudwego/hertz/pkg/app/server"
+	"github.com/cloudwego/kitex/pkg/klog"
+	"github.com/cloudwego/kitex/pkg/rpcinfo"
+	kserver "github.com/cloudwego/kitex/server"
 	"github.com/hashicorp/consul/api"
 	"github.com/joho/godotenv"
+	kitexlogrus "github.com/kitex-contrib/obs-opentelemetry/logging/logrus"
+	"go.uber.org/zap/zapcore"
+	"gopkg.in/natefinch/lumberjack.v2"
 	"log"
+	"net"
 	"sync"
+	"time"
 )
 
 func main() {
@@ -25,8 +34,10 @@ func main() {
 
 	// 增加计数
 	wg.Add(1)
+	// 初始化 Kitex 服务
+	opts := kitexInit()
 	// 创建支付服务的 handler 实例
-	svr := paymentservice.NewServer(handler.NewPaymentServiceImpl())
+	svr := paymentservice.NewServer(handler.NewPaymentServiceImpl(), opts...)
 
 	// 启动服务
 	go func() {
@@ -52,8 +63,8 @@ func main() {
 
 // startHTTPServer 启动 HTTP 服务
 func startHTTPServer() {
-	h := server.Default(
-		server.WithHostPorts(":8005"),
+	h := hserver.Default(
+		hserver.WithHostPorts(":8005"),
 	)
 	h.GET("/health", handler.HealthHandler)
 	h.POST("/payment", handler.PaymentHandler)
@@ -95,4 +106,37 @@ func registerServiceToConsul(serviceName, host string, port int, protocol string
 
 	log.Printf("Service %s registered successfully", serviceName)
 	return nil
+}
+
+func kitexInit() (opts []kserver.Option) {
+	// address
+	addr, err := net.ResolveTCPAddr("tcp", conf.GetConf().Kitex.Address)
+	if err != nil {
+		panic(err)
+	}
+	opts = append(opts, kserver.WithServiceAddr(addr))
+
+	// service info
+	opts = append(opts, kserver.WithServerBasicInfo(&rpcinfo.EndpointBasicInfo{
+		ServiceName: conf.GetConf().Kitex.Service,
+	}))
+
+	// klog
+	logger := kitexlogrus.NewLogger()
+	klog.SetLogger(logger)
+	klog.SetLevel(conf.LogLevel())
+	asyncWriter := &zapcore.BufferedWriteSyncer{
+		WS: zapcore.AddSync(&lumberjack.Logger{
+			Filename:   conf.GetConf().Kitex.LogFileName,
+			MaxSize:    conf.GetConf().Kitex.LogMaxSize,
+			MaxBackups: conf.GetConf().Kitex.LogMaxBackups,
+			MaxAge:     conf.GetConf().Kitex.LogMaxAge,
+		}),
+		FlushInterval: time.Minute,
+	}
+	klog.SetOutput(asyncWriter)
+	kserver.RegisterShutdownHook(func() {
+		asyncWriter.Sync()
+	})
+	return
 }
