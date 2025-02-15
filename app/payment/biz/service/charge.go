@@ -4,7 +4,7 @@ import (
 	"TikTokMall/app/payment/biz/dal/mysql"
 	"TikTokMall/app/payment/biz/dal/redis"
 	"TikTokMall/app/payment/biz/model"
-	payment "TikTokMall/app/payment/kitex_gen/payment"
+	"TikTokMall/app/payment/kitex_gen/payment"
 	"context"
 	kkerrors "github.com/cloudwego/kitex/pkg/kerrors"
 	creditcard "github.com/durango/go-credit-card"
@@ -22,7 +22,6 @@ func NewChargeService(ctx context.Context) *ChargeService {
 	return &ChargeService{ctx: ctx}
 }
 
-// Run 处理支付请求并创建支付记录
 func (s *ChargeService) Run(req *payment.ChargeReq) (resp *payment.ChargeResp, err error) {
 	// 构造信用卡信息对象并验证
 	card := creditcard.Card{
@@ -50,35 +49,31 @@ func (s *ChargeService) Run(req *payment.ChargeReq) (resp *payment.ChargeResp, e
 		// 若缓存中存在则直接返回缓存中的交易 ID
 		return &payment.ChargeResp{TransactionId: paymentFromCache.TransactionID}, nil
 	}
-	
+
 	// 检查是否已存在相同的订单
 	existingPayment, err := mysql.GetPaymentByOrderID(mysql.DB, s.ctx, req.OrderId)
 	if err == nil && existingPayment != nil {
 		return nil, kkerrors.NewBizStatusError(4005002, "订单已存在，不能重复支付")
 	}
 
-	// 插入新的支付记录
-	err = model.CreatePayment(mysql.DB, s.ctx, &model.Payments{
+	// 创建支付记录
+	thePayment := &model.Payments{
 		UserID:        req.UserId,
 		OrderID:       req.OrderId,
 		TransactionID: transactionId.String(),
 		Amount:        req.Amount,
 		PaymentMethod: req.PaymentMethod,
 		CreatedAt:     time.Now(),
-	})
+	}
+
+	// 插入支付记录到数据库
+	err = mysql.CreatePayment(mysql.DB, s.ctx, thePayment)
 	if err != nil {
 		return nil, kkerrors.NewBizStatusError(4005002, err.Error())
 	}
 
 	// 写入成功后，将支付记录缓存到 Redis
-	err = redis.SetPaymentCache(s.ctx, &model.Payments{
-		UserID:        req.UserId,
-		OrderID:       req.OrderId,
-		TransactionID: transactionId.String(),
-		Amount:        req.Amount,
-		PaymentMethod: req.PaymentMethod,
-		CreatedAt:     time.Now(),
-	})
+	err = redis.SetPaymentCache(s.ctx, thePayment)
 	if err != nil {
 		// 如果 Redis 缓存失败，可以记录日志，但这里返回错误表示缓存失败
 		return nil, kkerrors.NewBizStatusError(4005004, err.Error())
