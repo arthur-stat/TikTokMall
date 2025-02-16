@@ -65,9 +65,18 @@ func main() {
 func startHTTPServer() {
 	h := hserver.Default(
 		hserver.WithHostPorts(":8005"),
+		hserver.WithKeepAlive(true),
 	)
-	h.GET("/health", handler.HealthHandler)
-	h.POST("/payment", handler.PaymentHandler)
+
+	v1 := h.Group("/v1/payment")
+	{
+		v1.GET("/health", handler.HealthHandler)
+		v1.Group("/payment")
+		{
+			v1.POST("/charge", handler.ChargeHandler)
+		}
+	}
+
 	err := h.Run()
 	if err != nil {
 		log.Fatalf("Failed to start HTTP server: %v", err)

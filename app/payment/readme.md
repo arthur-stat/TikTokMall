@@ -43,11 +43,7 @@
 - Consul
 - Kitex
 
-### 2. 依赖安装
-
-在项目根目录下执行以下命令来安装依赖：
-
-### 3. 启动服务
+### 2. 启动服务
 
 由根目录进入项目根目录
 ``` bash
@@ -63,5 +59,72 @@ go run .
 ```
 服务启动后，将会在 8885 端口上监听 RPC 请求，
 并在 8005 端口上监听 HTTP 请求。
+
+### 3.API 接口
+
+3.1 支付请求 (Charge)
+接口描述： 处理用户的支付请求，支持多种支付方式（如信用卡支付）。
+请求方法：
+```Proto
+    rpc Charge(ChargeReq) returns (ChargeResp)
+```
+请求参数：
+
+| 字段名            | 类型             | 必填 | 描述                     |
+|------------------|----------------|---|------------------------|
+| `amount`         | float          | 是 | 支付金额                   |
+| `credit_card`    | CreditCardInfo | 是 | 信用卡信息                  |
+| `payment_method` | string         | 否 | 支付方式，默认为 "credit_card" |
+| `order_id`       | int64          | 是 | 订单ID                   |
+| `user_id`        | int64          | 是 | 用户ID                   |
+
+CreditCardInfo 结构：
+
+| 字段名                            | 类型     | 必填 | 描述     |
+|--------------------------------|--------|-|--------|
+| `credit_card_number`           | string | 是 | 信用卡号   |
+| `credit_card_cvv`              | nt32   | 是 | CVV  |
+| `credit_card_expiration_year`  | int32  | 是 | 信用卡过期年份   |
+| `credit_card_expiration_month` | int32  | 是 | 信用卡过期月份   |
+
+响应参数：
+
+
+| 字段名                        | 类型     | 描述   |
+|----------------------------|--------|------|
+| `transaction_id`           | string | 交易ID |
+
+示例请求：
+```json
+{
+  "amount": 100.0,
+  "order_id": 123456,
+  "user_id": 789,
+  "payment_method": "credit_card",
+  "credit_card": {
+    "credit_card_number": "4111111111111111",
+    "credit_card_cvv": 123,
+    "credit_card_expiration_year": 2025,
+    "credit_card_expiration_month": 12
+  }
+}
+```
+示例响应：
+```json
+{
+    "transaction_id": "b24e05ec-3aff-4bee-b8fc-46345f50ea02"
+}
+```
+
+
+### 4.错误码
+
+| 错误码       | 描述      |
+|-----------|---------|
+| `4004001` | 请求参数无效  |
+| `5005001` | 内部服务器错误 |
+| `4004002` | 支付失败    |
+| `4004003` | 订单不存在   |
+| `4004004` | 用户不存在   |
 
 

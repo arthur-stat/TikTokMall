@@ -42,8 +42,8 @@ func (s *PaymentServiceImpl) Charge(ctx context.Context, req *payment.ChargeReq)
 	return resp, nil
 }
 
-// PaymentHandler 处理支付请求的 HTTP 路由
-func PaymentHandler(c context.Context, ctx *app.RequestContext) {
+// ChargeHandler处理支付请求的 HTTP 路由
+func ChargeHandler(c context.Context, ctx *app.RequestContext) {
 	// 从请求中解析支付请求参数
 	var req payment.ChargeReq
 	if err := ctx.Bind(&req); err != nil {
