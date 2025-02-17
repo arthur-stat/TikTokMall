@@ -14,7 +14,6 @@ import (
 	kitexlogrus "github.com/kitex-contrib/obs-opentelemetry/logging/logrus"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
-	"log"
 	"net"
 	"sync"
 	"time"
@@ -24,18 +23,20 @@ func main() {
 	// 创建一个 WaitGroup 来等待所有 goroutines 完成
 	var wg sync.WaitGroup
 
+	// 初始化 Kitex 服务
+	opts := kitexInit()
+
 	// 获取环境变量
 	_ = godotenv.Load()
 	// 初始化 Redis 和 MySQL 客户端
 	err := dal.Init()
 	if err != nil {
-		log.Fatalf("Failed to initialize Redis and MySQL: %v", err)
+		klog.Error("Failed to initialize Redis and MySQL: %v", err)
 	}
 
 	// 增加计数
 	wg.Add(1)
-	// 初始化 Kitex 服务
-	opts := kitexInit()
+
 	// 创建支付服务的 handler 实例
 	svr := paymentservice.NewServer(handler.NewPaymentServiceImpl(), opts...)
 
@@ -44,7 +45,7 @@ func main() {
 		defer wg.Done() // 服务运行完毕后减少计数
 		err := svr.Run()
 		if err != nil {
-			log.Println("Payment service run error:", err.Error())
+			klog.Error("Payment service run error:", err.Error())
 		}
 	}()
 
@@ -54,7 +55,7 @@ func main() {
 	// 启动Consul客户端并注册服务
 	err = registerServiceToConsul("payment", "localhost", 8005, "http")
 	if err != nil {
-		log.Fatalf("Failed to register service to Consul: %v", err)
+		klog.Error("Failed to register service to Consul: %v", err)
 	}
 
 	// 等待所有 goroutines 完成
@@ -79,7 +80,7 @@ func startHTTPServer() {
 
 	err := h.Run()
 	if err != nil {
-		log.Fatalf("Failed to start HTTP server: %v", err)
+		klog.Error("Failed to start HTTP server: %v", err)
 	}
 }
 
@@ -113,7 +114,7 @@ func registerServiceToConsul(serviceName, host string, port int, protocol string
 		return err
 	}
 
-	log.Printf("Service %s registered successfully", serviceName)
+	klog.Info("Service %s registered successfully", serviceName)
 	return nil
 }
 

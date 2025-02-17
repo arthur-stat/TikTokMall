@@ -10,6 +10,9 @@ service PaymentService {
   rpc Charge(ChargeReq) returns (ChargeResp) {
     option (api.post) = "/payment/charge";
   }
+//  rpc Refund(RefundReq) returns (RefundResp) {
+//    option (api.post) = "/payment/refund";
+//  }
 }
 
 message CreditCardInfo {
@@ -19,14 +22,32 @@ message CreditCardInfo {
   int32 credit_card_expiration_month = 4 [(api.body) = "credit_card_expiration_month"];
 }
 
+// 支付请求参数
 message ChargeReq {
-  float amount = 1 [(api.body) = "amount"];
-  CreditCardInfo credit_card = 2 [(api.body) = "credit_card"];
-  string payment_method = 5 [(api.body) = "payment_method"];
-  int64 order_id = 3 [(api.body) = "order_id"];
-  int64 user_id = 4 [(api.body) = "user_id"];
+  float amount = 1 [(api.body) = "amount"];                     // 支付金额
+  CreditCardInfo credit_card = 2 [(api.body) = "credit_card"];  // 信用卡信息
+  string payment_method = 5 [(api.body) = "payment_method"];    // 支付方式
+  int64 order_id = 3 [(api.body) = "order_id"];                 // 订单ID
+  int64 user_id = 4 [(api.body) = "user_id"];                   // 用户ID
 }
 
+// 支付响应参数
 message ChargeResp {
-  string transaction_id = 1;
+  string transaction_id = 1;    // 交易ID
 }
+
+//// 退款请求参数
+//message RefundReq {
+//  string transaction_id = 1 [(api.body) = "transaction_id"];  // 原交易ID
+//  int64 order_id = 2 [(api.body) = "order_id"];               // 订单ID
+//  float amount = 3 [(api.body) = "amount"];                   // 退款金额
+//  string reason = 4 [(api.body) = "reason"];                  // 退款原因
+//  int64 user_id = 5 [(api.body) = "user_id"];                 // 用户ID
+//}
+//
+//// 退款响应参数
+//message RefundResp {
+//  string refund_id = 1; // 退款单号
+//  int32 status_code = 2; // 状态码（0-成功，其他为错误码）
+//}
+
