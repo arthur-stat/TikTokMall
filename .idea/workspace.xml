@@ -5,11 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="916fdc05-e619-4350-86c0-0294aeb3596f" name="更改" comment="完成payment服务的简单健康检查">
-      <change afterPath="$PROJECT_DIR$/app/payment/biz/service/refund.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/payment/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/payment/main.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/payment/readme.md" beforeDir="false" afterPath="$PROJECT_DIR$/app/payment/readme.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/idl/payment.proto" beforeDir="false" afterPath="$PROJECT_DIR$/idl/payment.proto" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

@@ -34,7 +34,7 @@ func (s *ChargeService) Run(req *payment.ChargeReq) (resp *payment.ChargeResp, e
 		return nil, kkerrors.NewBizStatusError(4004001, err.Error())
 	}
 
-	// 生成交易 ID
+	// 生成交易 ID（暂未使用支付网关）
 	transactionId, err := uuid.NewRandom()
 	if err != nil {
 		return nil, kkerrors.NewBizStatusError(4005001, err.Error())

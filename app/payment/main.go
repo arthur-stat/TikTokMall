@@ -72,10 +72,7 @@ func startHTTPServer() {
 	v1 := h.Group("/v1/payment")
 	{
 		v1.GET("/health", handler.HealthHandler)
-		v1.Group("/payment")
-		{
-			v1.POST("/charge", handler.ChargeHandler)
-		}
+		v1.POST("/charge", handler.ChargeHandler)
 	}
 
 	err := h.Run()
