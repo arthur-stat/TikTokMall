@@ -1,38 +1,70 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net"
+	"net/http"
 
-	"github.com/cloudwego/kitex/pkg/rpcinfo"
+	"github.com/cloudwego/kitex/pkg/registry"
 	"github.com/cloudwego/kitex/server"
 	consul "github.com/kitex-contrib/registry-consul"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
+	"TikTokMall/app/cart/biz/dal/mysql"
+	"TikTokMall/app/cart/conf"
 	"TikTokMall/app/cart/handler"
 	"TikTokMall/app/cart/kitex_gen/cart/cartservice"
+	"TikTokMall/app/cart/pkg/tracer"
 )
 
 func main() {
-	// 创建 Consul 注册器
-	r, err := consul.NewConsulRegister("localhost:8500")
+	// 1. 初始化配置
+	config := conf.GetConf()
+
+	// 2. 初始化追踪
+	tracer, closer, err := tracer.InitJaeger()
 	if err != nil {
-		log.Fatalf("create consul register failed: %v", err)
+		log.Fatalf("初始化Jaeger失败: %v", err)
+	}
+	defer closer.Close()
+
+	// 3. 初始化Prometheus
+	go func() {
+		http.Handle("/metrics", promhttp.Handler())
+		if err := http.ListenAndServe(fmt.Sprintf(":%d", config.Prometheus.Port), nil); err != nil {
+			log.Fatalf("启动Prometheus metrics服务失败: %v", err)
+		}
+	}()
+
+	// 4. 初始化数据库
+	if err := mysql.Init(); err != nil {
+		log.Fatalf("初始化MySQL失败: %v", err)
 	}
 
-	// 创建服务器
-	addr, _ := net.ResolveTCPAddr("tcp", ":8002")
-	svr := cartservice.NewServer(
-		handler.NewCartServiceImpl(),
+	// 5. 创建服务注册器
+	r, err := consul.NewConsulRegister(config.Registry.RegistryAddress[0])
+	if err != nil {
+		log.Fatalf("创建服务注册器失败: %v", err)
+	}
+
+	// 6. 创建RPC服务器
+	addr, _ := net.ResolveTCPAddr("tcp", fmt.Sprintf(":%d", config.Service.Port))
+	opts := []server.Option{
 		server.WithServiceAddr(addr),
 		server.WithRegistry(r),
-		server.WithServerBasicInfo(&rpcinfo.EndpointBasicInfo{
-			ServiceName: "cart",
-			Tags:        []string{"cart", "v1"},
+		server.WithRegistryInfo(&registry.Info{
+			ServiceName: config.Service.Name,
+			Tags:        []string{"v1"},
 		}),
-	)
+		server.WithHealthCheck(true),
+	}
 
-	// 启动服务器
+	svr := cartservice.NewServer(handler.NewCartServiceImpl(), opts...)
+
+	// 7. 启动服务
+	log.Printf("cart service starting on port %d...", config.Service.Port)
 	if err := svr.Run(); err != nil {
-		log.Fatalf("server start failed: %v", err)
+		log.Fatalf("服务运行失败: %v", err)
 	}
 }
