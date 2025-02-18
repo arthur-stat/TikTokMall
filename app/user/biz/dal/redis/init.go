@@ -1,24 +1,25 @@
 package redis
 
 import (
+	"TikTokMall/app/user/conf"
 	"context"
 
 	"github.com/redis/go-redis/v9"
-	"TikTokMall/app/user/conf"
 )
 
-var (
-	RedisClient *redis.Client
-)
+var RDB *redis.Client
 
+// Init initializes the Redis connection
 func Init() {
-	RedisClient = redis.NewClient(&redis.Options{
-		Addr:     conf.GetConf().Redis.Address,
-		Username: conf.GetConf().Redis.Username,
-		Password: conf.GetConf().Redis.Password,
-		DB:       conf.GetConf().Redis.DB,
+	c := conf.GetConf().Redis
+	RDB = redis.NewClient(&redis.Options{
+		Addr:     c.Addr,
+		Password: c.Password,
+		DB:       c.DB,
 	})
-	if err := RedisClient.Ping(context.Background()).Err(); err != nil {
+
+	// Test connection
+	if err := RDB.Ping(context.Background()).Err(); err != nil {
 		panic(err)
 	}
 }

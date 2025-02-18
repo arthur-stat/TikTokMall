@@ -1,23 +1,22 @@
 kitex:
   service: "user"
-  address: ":8888"
-  log_level: info
-  log_file_name: "log/kitex.log"
+  address: ":8001"
+  log_file_name: "log/user.log"
   log_max_size: 10
-  log_max_age: 3
-  log_max_backups: 50
-
-registry:
-  registry_address:
-    - 127.0.0.1:2379
-  username: ""
-  password: ""
+  log_max_backups: 5
+  log_max_age: 30
 
 mysql:
-  dsn: "gorm:gorm@tcp(127.0.0.1:3306)/gorm?charset=utf8mb4&parseTime=True&loc=Local"
+  host: "localhost"
+  port: 3306
+  user: "gorm"
+  password: "gorm"
+  database: "tikmall"
 
 redis:
-  address: "127.0.0.1:6379"
-  username: ""
+  addr: "localhost:6379"
   password: ""
   db: 0
+
+logger:
+  level: "debug"
