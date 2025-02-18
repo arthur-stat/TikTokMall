@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 
 	"github.com/cloudwego/hertz/pkg/app/middlewares/server/recovery"
@@ -9,15 +10,37 @@ import (
 	"github.com/cloudwego/hertz/pkg/common/hlog"
 	"github.com/hertz-contrib/cors"
 	consul "github.com/kitex-contrib/registry-consul"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"TikTokMall/app/auth/biz/dal/mysql"
 	"TikTokMall/app/auth/biz/dal/redis"
 	"TikTokMall/app/auth/biz/handler"
 	"TikTokMall/app/auth/biz/registry"
 	"TikTokMall/app/auth/biz/utils"
+	"TikTokMall/app/auth/conf"
+	"TikTokMall/app/auth/tracer"
 )
 
 func main() {
+	// 1. 初始化配置
+	conf.Init()
+	config := conf.GetConfig()
+
+	// 2. 初始化追踪
+	tracer, closer, err := tracer.InitJaeger()
+	if err != nil {
+		hlog.Fatalf("初始化Jaeger失败: %v", err)
+	}
+	defer closer.Close()
+
+	// 3. 初始化Prometheus
+	go func() {
+		http.Handle("/metrics", promhttp.Handler())
+		if err := http.ListenAndServe(fmt.Sprintf(":%d", config.Prometheus.Port), nil); err != nil {
+			hlog.Fatalf("启动Prometheus metrics服务失败: %v", err)
+		}
+	}()
+
 	// 初始化数据库连接
 	if err := initDeps(); err != nil {
 		hlog.Fatalf("init dependencies failed: %v", err)

@@ -1,9 +1,12 @@
 package main
 
 import (
-	auth "TikTokMall/app/auth/kitex_gen/auth"
 	"context"
+
+	"TikTokMall/app/auth/biz/dal/mysql"
+	"TikTokMall/app/auth/biz/dal/redis"
 	"TikTokMall/app/auth/biz/service"
+	auth "TikTokMall/app/auth/kitex_gen/auth"
 )
 
 // AuthServiceImpl implements the last service interface defined in the IDL.
@@ -56,4 +59,19 @@ func (s *AuthServiceImpl) ValidateToken(ctx context.Context, req *auth.ValidateT
 	resp, err = service.NewValidateTokenService(ctx).Run(req)
 
 	return resp, err
+}
+
+// HealthCheck implements the AuthServiceImpl interface.
+func (s *AuthServiceImpl) HealthCheck(ctx context.Context) error {
+	// 检查MySQL连接
+	if err := mysql.DB.Raw("SELECT 1").Error; err != nil {
+		return err
+	}
+
+	// 检查Redis连接
+	if err := redis.RDB.Ping(ctx).Err(); err != nil {
+		return err
+	}
+
+	return nil
 }

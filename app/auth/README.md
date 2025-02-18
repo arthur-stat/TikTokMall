@@ -226,3 +226,126 @@ A: 访问令牌24小时，刷新令牌7天。
 - 使用 Redis 缓存令牌信息
 - 定期清理过期令牌
 - 使用令牌黑名单机制 
+
+# Auth Service
+
+认证服务，负责处理用户认证、授权和令牌管理。
+
+## 功能特性
+
+- 用户注册和登录
+- 令牌管理（生成、刷新、验证）
+- 登录重试限制
+- 令牌黑名单
+- 分布式会话管理
+
+## 技术栈
+
+- Kitex (RPC框架)
+- GORM (ORM框架)
+- MySQL (数据存储)
+- Redis (缓存和会话管理)
+- Jaeger (链路追踪)
+- Prometheus (监控)
+- Consul (服务发现)
+
+## 快速开始
+
+1. 安装依赖
+```bash
+go mod tidy
+```
+
+2. 配置环境
+```bash
+cp conf/dev/conf.yaml.example conf/dev/conf.yaml
+# 修改配置文件
+```
+
+3. 启动服务
+```bash
+sh scripts/build.sh
+./output/bin/auth
+```
+
+## API文档
+
+### 注册
+```protobuf
+rpc Register(RegisterRequest) returns (RegisterResponse)
+```
+
+### 登录
+```protobuf
+rpc Login(LoginRequest) returns (LoginResponse)
+```
+
+### 刷新令牌
+```protobuf
+rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse)
+```
+
+### 登出
+```protobuf
+rpc Logout(LogoutRequest) returns (LogoutResponse)
+```
+
+### 验证令牌
+```protobuf
+rpc ValidateToken(ValidateTokenRequest) returns (ValidateTokenResponse)
+```
+
+## 监控指标
+
+- auth_total: 认证请求总数
+- auth_duration_seconds: 认证处理时间
+- token_total: 令牌操作总数
+
+## 配置说明
+
+```yaml
+env: "dev"  # 环境：dev, test, prod
+
+kitex:
+  service: "auth"  # 服务名
+  address: ":8888" # 服务地址
+  log_level: "info" # 日志级别
+
+mysql:
+  dsn: "用户名:密码@tcp(主机:端口)/数据库名"
+
+redis:
+  address: "localhost:6379"
+  password: ""
+  db: 0
+
+registry:
+  registry_address:
+    - "localhost:8500"  # Consul地址
+
+jaeger:
+  host: "localhost"
+  port: 6831
+
+prometheus:
+  port: 9090
+  path: "/metrics"
+```
+
+## 部署
+
+支持以下部署方式：
+1. 直接部署
+2. Docker部署
+3. Kubernetes部署
+
+详细部署步骤请参考[部署文档](deploy/README.md)
+
+## 开发团队
+
+- 开发人员1
+- 开发人员2
+
+## 许可证
+
+MIT License 
