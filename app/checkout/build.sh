@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 RUN_NAME="checkout"
 mkdir -p output/bin output/conf
 cp script/* output/

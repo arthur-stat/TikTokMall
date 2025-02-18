@@ -3,20 +3,20 @@ service:
   port: 8080
 
 mysql:
-  host: "localhost"
+  host: "mysql.tiktok.mall"
   port: 3306
-  user: "root"
-  password: "root"
+  user: "prod_user"
+  password: "prod_password"
   database: "tiktok_mall"
 
 registry:
   registry_address:
-    - "localhost:8500"
+    - "consul.tiktok.mall:8500"
   username: ""
   password: ""
 
 jaeger:
-  host: "localhost"
+  host: "jaeger.tiktok.mall"
   port: 6831
   sampler_type: "const"
   sampler_param: 1
@@ -28,13 +28,7 @@ prometheus:
 
 log:
   level: "info"
-  filename: "logs/checkout.log"
-  max_size: 100    # megabytes
-  max_age: 7       # days
-  max_backups: 5
-
-redis:
-  address: "127.0.0.1:6379"
-  username: ""
-  password: ""
-  db: 0
+  filename: "/var/log/checkout/checkout.log"
+  max_size: 100
+  max_age: 7
+  max_backups: 5 
