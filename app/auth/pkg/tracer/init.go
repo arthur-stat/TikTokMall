@@ -13,7 +13,7 @@ import (
 )
 
 func InitJaeger() (opentracing.Tracer, io.Closer, error) {
-	config := conf.GetConfig()
+	config := conf.GetConf()
 	cfg := &jaegercfg.Configuration{
 		ServiceName: config.Service.Name,
 		Sampler: &jaegercfg.SamplerConfig{

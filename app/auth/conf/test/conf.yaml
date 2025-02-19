@@ -1,23 +1,36 @@
-kitex:
-  service: "auth"
-  address: ":8888"
-  log_level: info
-  log_file_name: "log/kitex.log"
-  log_max_size: 10
-  log_max_age: 3
-  log_max_backups: 50
+env: test
 
-registry:
-  registry_address:
-    - 127.0.0.1:2379
-  username: ""
-  password: ""
+service:
+  name: "auth-service"  # 服务名称
+  port: 8000           # 服务端口
+  log_level: "info"    # 日志级别
 
 mysql:
-  dsn: "gorm:gorm@tcp(127.0.0.1:3306)/gorm?charset=utf8mb4&parseTime=True&loc=Local"
+  # 使用 % 通配符允许从任何主机连接
+  dsn: "tiktok:tiktok123@tcp(127.0.0.1:3307)/tiktok_mall?allowPublicKeyRetrieval=true&parseTime=True&loc=Local"
 
 redis:
-  address: "127.0.0.1:6379"
+  address: "127.0.0.1:6380"
   username: ""
   password: ""
   db: 0
+
+registry:
+  registry_address: 
+    - "localhost:8501"  # 更新 Consul 地址
+  username: ""
+  password: ""
+
+log:
+  level: "info"
+
+jaeger:
+  host: "localhost"
+  port: 6831
+  sampler_type: "const"
+  sampler_param: 1
+  log_spans: true
+
+prometheus:
+  port: 9091
+  path: "/metrics"

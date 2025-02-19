@@ -4,11 +4,85 @@
 
 认证服务是 TikTokMall 电商平台的核心服务之一，负责处理用户认证、授权和令牌管理等功能。该服务基于 [Kitex](https://github.com/cloudwego/kitex/) 框架开发，提供了高性能的 RPC 接口，支持分布式部署和服务发现。
 
-服务默认端口：
+## 快速启动
+
+### 1. 环境要求
+- Go 1.21 或更高版本
+- Docker 和 Docker Compose
+- Git
+
+### 2. 启动基础服务
+```bash
+# 停止并删除所有已存在的容器和卷
+docker compose down -v
+
+# 启动 MySQL 和 Redis
+docker compose up -d mysql redis
+```
+
+### 3. 配置数据库
+等待 MySQL 完全启动后（约15秒），执行以下命令：
+```bash
+# 连接到 MySQL
+mysql -h 127.0.0.1 -P 3307 -u root -proot123
+
+# 在 MySQL 中执行：
+CREATE DATABASE IF NOT EXISTS tiktok_mall;
+DROP USER IF EXISTS 'tiktok'@'%';
+CREATE USER 'tiktok'@'%' IDENTIFIED WITH mysql_native_password BY 'tiktok123';
+GRANT ALL PRIVILEGES ON tiktok_mall.* TO 'tiktok'@'%';
+FLUSH PRIVILEGES;
+```
+
+### 4. 验证服务状态
+```bash
+# 检查 MySQL 连接
+mysql -h 127.0.0.1 -P 3307 -u tiktok -ptiktok123 tiktok_mall
+
+# 检查 Redis 连接
+redis-cli -p 6380 ping
+```
+
+### 5. 启动服务
+```bash
+go run main.go
+```
+
+### 6. 服务端口
 - RPC 服务端口：8888
 - HTTP 服务端口：8000
-- Prometheus 监控端口：9090
-- 健康检查端口：8888/health
+- Prometheus 监控端口：9091
+- MySQL 端口：3307
+- Redis 端口：6380
+
+## 配置说明
+
+配置文件位于 `conf/test/conf.yaml`，包含：
+- MySQL 连接信息
+- Redis 连接信息
+- 服务端口设置
+- 日志级别设置
+
+## 常见问题
+
+1. MySQL 连接失败
+   - 检查 MySQL 容器是否正常运行
+   - 验证用户名和密码是否正确
+   - 确认端口映射是否正确
+
+2. Redis 连接失败
+   - 检查 Redis 容器是否正常运行
+   - 确认端口映射是否正确
+
+3. 服务启动失败
+   - 检查配置文件是否正确
+   - 确认所有依赖服务是否正常运行
+   - 查看日志获取详细错误信息
+
+## 注意事项
+- 首次启动时需要等待 MySQL 完全初始化
+- 确保所需端口未被其他服务占用
+- 开发环境下使用 test 配置文件
 
 ## 主要功能
 

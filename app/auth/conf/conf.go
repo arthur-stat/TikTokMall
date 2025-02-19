@@ -18,20 +18,26 @@ var (
 
 type Config struct {
 	Env        string           `mapstructure:"env"`
-	Kitex      Kitex            `mapstructure:"kitex"`
-	MySQL      MySQL            `mapstructure:"mysql"`
-	Redis      Redis            `mapstructure:"redis"`
-	Registry   Registry         `mapstructure:"registry"`
+	Service    ServiceConfig    `mapstructure:"service"`
+	MySQL      MySQLConfig      `mapstructure:"mysql"`
+	Redis      RedisConfig      `mapstructure:"redis"`
+	Registry   RegistryConfig   `mapstructure:"registry"`
 	Log        LogConfig        `mapstructure:"log"`
 	Jaeger     JaegerConfig     `mapstructure:"jaeger"`
 	Prometheus PrometheusConfig `mapstructure:"prometheus"`
 }
 
-type MySQL struct {
+type ServiceConfig struct {
+	Name     string `mapstructure:"name"`
+	Port     int    `mapstructure:"port"`
+	LogLevel string `mapstructure:"log_level"`
+}
+
+type MySQLConfig struct {
 	DSN string `mapstructure:"dsn"`
 }
 
-type Redis struct {
+type RedisConfig struct {
 	Address  string `mapstructure:"address"`
 	Username string `mapstructure:"username"`
 	Password string `mapstructure:"password"`
@@ -48,7 +54,7 @@ type Kitex struct {
 	LogMaxAge     int    `mapstructure:"log_max_age"`
 }
 
-type Registry struct {
+type RegistryConfig struct {
 	RegistryAddress []string `mapstructure:"registry_address"`
 	Username        string   `mapstructure:"username"`
 	Password        string   `mapstructure:"password"`
@@ -73,30 +79,32 @@ type PrometheusConfig struct {
 
 // GetConf gets configuration instance
 func GetConf() *Config {
-	once.Do(initConf)
 	return conf
 }
 
-func initConf() {
-	viper.SetConfigName("conf")
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath(filepath.Join("conf", GetEnv()))
+func Init() error {
+	once.Do(func() {
+		viper.SetConfigName("conf")
+		viper.SetConfigType("yaml")
+		viper.AddConfigPath(filepath.Join("conf", GetEnv()))
 
-	if err := viper.ReadInConfig(); err != nil {
-		klog.Fatalf("读取配置文件失败: %v", err)
-	}
+		if err := viper.ReadInConfig(); err != nil {
+			klog.Fatalf("读取配置文件失败: %v", err)
+		}
 
-	conf = new(Config)
-	if err := viper.Unmarshal(conf); err != nil {
-		klog.Fatalf("解析配置文件失败: %v", err)
-	}
+		conf = new(Config)
+		if err := viper.Unmarshal(conf); err != nil {
+			klog.Fatalf("解析配置文件失败: %v", err)
+		}
 
-	if err := validator.Validate(conf); err != nil {
-		klog.Fatalf("验证配置失败: %v", err)
-	}
+		if err := validator.Validate(conf); err != nil {
+			klog.Fatalf("验证配置失败: %v", err)
+		}
 
-	conf.Env = GetEnv()
-	pretty.Printf("%+v\n", conf)
+		conf.Env = GetEnv()
+		pretty.Printf("%+v\n", conf)
+	})
+	return nil
 }
 
 func GetEnv() string {
@@ -108,7 +116,7 @@ func GetEnv() string {
 }
 
 func LogLevel() klog.Level {
-	level := GetConf().Kitex.LogLevel
+	level := GetConf().Service.LogLevel
 	switch level {
 	case "trace":
 		return klog.LevelTrace
