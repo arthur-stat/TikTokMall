@@ -1,350 +1,140 @@
-# Auth Service Documentation
+# 认证服务 (Auth Service)
 
-## 目录
-- [服务概述](#服务概述)
-- [API 接口](#api-接口)
-- [数据模型](#数据模型)
-- [测试说明](#测试说明)
-- [部署指南](#部署指南)
-- [常见问题](#常见问题)
+## 介绍
 
-## 服务概述
+认证服务是 TikTokMall 电商平台的核心服务之一，负责处理用户认证、授权和令牌管理等功能。该服务基于 [Kitex](https://github.com/cloudwego/kitex/) 框架开发，提供了高性能的 RPC 接口，支持分布式部署和服务发现。
 
-Auth Service 是 TikTokMall 的认证服务，提供用户注册、登录、令牌管理等功能。主要特性包括：
+服务默认端口：
+- RPC 服务端口：8888
+- HTTP 服务端口：8000
+- Prometheus 监控端口：9090
+- 健康检查端口：8888/health
 
-- 用户注册和登录
-- 访问令牌和刷新令牌管理
-- 登录重试限制
-- 令牌验证和黑名单
-- Redis 缓存支持
-- MySQL 持久化存储
+## 主要功能
 
-## API 接口
+- **用户认证**：处理用户注册和登录请求，支持多种认证方式。
+- **令牌管理**：生成、刷新和验证访问令牌，管理令牌生命周期。
+- **会话管理**：维护用户会话状态，支持分布式会话存储。
+- **权限控制**：实现基于角色的访问控制，管理用户权限。
+- **安全防护**：登录重试限制，令牌黑名单，防止恶意访问。
 
-### 1. 用户注册 (Register)
+## 目录结构
 
-```protobuf
-rpc Register(RegisterRequest) returns (RegisterResponse)
-```
+| 目录            | 介绍                                                    |
+|----------------|--------------------------------------------------------|
+| `conf`         | 配置文件目录，包含服务的配置信息                            |
+| `main.go`      | 服务启动文件，初始化服务并启动 RPC 和 HTTP 服务              |
+| `handler`      | 请求处理层，负责接收和处理 RPC 请求                         |
+| `kitex_gen`    | Kitex 框架自动生成的代码，包含 RPC 接口定义                 |
+| `biz/service`  | 业务逻辑层，实现认证、授权等核心业务逻辑                     |
+| `biz/dal`      | 数据访问层，负责与数据库和缓存交互                          |
+| `pkg`          | 公共工具包，包含监控、追踪等组件                            |
+| `deploy`       | 部署相关配置和脚本                                        |
+| `scripts`      | 构建、测试和部署脚本                                      |
 
-**请求参数：**
-- username: 用户名（必填，长度3-32）
-- password: 密码（必填，长度6-32）
-- email: 邮箱（可选）
-- phone: 手机号（可选）
+## 依赖项
 
-**响应：**
-- base: 基础响应信息
-- data: 包含用户ID和访问令牌
+认证服务依赖以下外部服务和技术栈：
 
-**示例：**
-```bash
-curl -X POST http://localhost:8888/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "testuser",
-    "password": "password123",
-    "email": "test@example.com",
-    "phone": "13800138000"
-  }'
-```
+- **MySQL**：用于持久化存储用户信息和令牌数据
+- **Redis**：用于缓存会话信息和令牌黑名单
+- **Consul**：用于服务注册与发现
+- **Jaeger**：用于分布式追踪
+- **Prometheus**：用于监控指标收集
 
-### 2. 用户登录 (Login)
+## 如何运行
 
-```protobuf
-rpc Login(LoginRequest) returns (LoginResponse)
-```
+### 1. 环境配置
 
-**请求参数：**
-- username: 用户名（必填）
-- password: 密码（必填）
+确保已安装以下工具和环境：
 
-**响应：**
-- base: 基础响应信息
-- data: 包含访问令牌和刷新令牌
+- Go 1.16 或更高版本
+- MySQL
+- Redis
+- Consul
+- Docker & Docker Compose
 
-**特性：**
-- 登录重试限制（5次/小时）
-- 密码加密存储（bcrypt）
+### 2. 启动服务
 
-### 3. 刷新令牌 (RefreshToken)
-
-```protobuf
-rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse)
-```
-
-**请求参数：**
-- refresh_token: 刷新令牌（必填）
-
-**响应：**
-- base: 基础响应信息
-- data: 包含新的访问令牌和刷新令牌
-
-### 4. 登出 (Logout)
-
-```protobuf
-rpc Logout(LogoutRequest) returns (LogoutResponse)
-```
-
-**请求参数：**
-- token: 当前访问令牌（必填）
-
-**响应：**
-- base: 基础响应信息
-
-### 5. 验证令牌 (ValidateToken)
-
-```protobuf
-rpc ValidateToken(ValidateTokenRequest) returns (ValidateTokenResponse)
-```
-
-**请求参数：**
-- token: 访问令牌（必填）
-
-**响应：**
-- base: 基础响应信息
-- data: 包含用户ID和用户名
-
-## 数据模型
-
-### User 表
-```sql
-CREATE TABLE users (
-    id BIGINT NOT NULL AUTO_INCREMENT,
-    username VARCHAR(32) NOT NULL,
-    password VARCHAR(60) NOT NULL,
-    email VARCHAR(64),
-    phone VARCHAR(16),
-    status TINYINT NOT NULL DEFAULT 1,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (id),
-    UNIQUE KEY uk_username (username),
-    UNIQUE KEY uk_email (email),
-    UNIQUE KEY uk_phone (phone)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-```
-
-### Token 表
-```sql
-CREATE TABLE tokens (
-    id BIGINT NOT NULL AUTO_INCREMENT,
-    user_id BIGINT NOT NULL,
-    token VARCHAR(512) NOT NULL,
-    refresh_token VARCHAR(512),
-    expired_at TIMESTAMP NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id),
-    KEY idx_user_id (user_id),
-    KEY idx_token (token(191)),
-    KEY idx_refresh_token (refresh_token(191))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-```
-
-## 测试说明
-
-### 运行测试
+进入项目目录：
 ```bash
 cd app/auth
-./scripts/test.sh
 ```
 
-测试脚本会：
-1. 检查必要的依赖（MySQL、Redis、Go）
-2. 准备测试数据库环境
-3. 运行单元测试和集成测试
-4. 生成测试覆盖率报告
-5. 清理测试环境
-
-### 测试用例说明
-
-1. **注册测试**
-   - 正常注册
-   - 用户名已存在
-   - 邮箱已存在
-   - 手机号已存在
-
-2. **登录测试**
-   - 正常登录
-   - 密码错误
-   - 用户不存在
-   - 登录重试限制
-
-3. **令牌测试**
-   - 刷新令牌
-   - 令牌验证
-   - 令牌过期
-   - 令牌黑名单
-
-### 测试覆盖率
-当前测试覆盖率：
-- 业务逻辑 (service): 71.1%
-- 数据访问层 (dal): 70%+
-- HTTP处理器 (handler): 需要改进
-- 配置管理 (conf): 需要改进
-
-## 部署指南
-
-### 环境要求
-- Go 1.20+
-- MySQL 8.0+
-- Redis 6.0+
-
-### 配置说明
-环境变量：
-- `MYSQL_HOST`: MySQL 主机地址
-- `MYSQL_PORT`: MySQL 端口
-- `MYSQL_USER`: MySQL 用户名
-- `MYSQL_PASSWORD`: MySQL 密码
-- `MYSQL_DATABASE`: 数据库名称
-- `REDIS_ADDR`: Redis 地址
-- `REDIS_PASSWORD`: Redis 密码
-- `REDIS_DB`: Redis 数据库编号
-
-### 部署步骤
-1. 编译服务
-```bash
-go build -o auth_service
-```
-
-2. 运行服务
-```bash
-./auth_service
-```
-
-## 常见问题
-
-### 1. 登录重试限制
-Q: 如何重置登录重试次数？
-A: 成功登录后会自动重置，或等待1小时后自动重置。
-
-### 2. 令牌过期
-Q: 令牌有效期是多久？
-A: 访问令牌24小时，刷新令牌7天。
-
-### 3. 性能优化
-- 使用 Redis 缓存令牌信息
-- 定期清理过期令牌
-- 使用令牌黑名单机制 
-
-# Auth Service
-
-认证服务，负责处理用户认证、授权和令牌管理。
-
-## 功能特性
-
-- 用户注册和登录
-- 令牌管理（生成、刷新、验证）
-- 登录重试限制
-- 令牌黑名单
-- 分布式会话管理
-
-## 技术栈
-
-- Kitex (RPC框架)
-- GORM (ORM框架)
-- MySQL (数据存储)
-- Redis (缓存和会话管理)
-- Jaeger (链路追踪)
-- Prometheus (监控)
-- Consul (服务发现)
-
-## 快速开始
-
-1. 安装依赖
+安装依赖：
 ```bash
 go mod tidy
 ```
 
-2. 配置环境
+启动依赖服务：
 ```bash
-cp conf/dev/conf.yaml.example conf/dev/conf.yaml
-# 修改配置文件
+docker-compose up -d
 ```
 
-3. 启动服务
+启动认证服务：
 ```bash
 sh scripts/build.sh
 ./output/bin/auth
 ```
 
-## API文档
+### 3. API 接口
 
-### 注册
+#### 用户注册 (Register)
+接口描述：处理新用户注册请求。
+
+请求方法：
 ```protobuf
 rpc Register(RegisterRequest) returns (RegisterResponse)
 ```
 
-### 登录
+请求参数：
+
+| 字段名      | 类型    | 必填 | 描述        |
+|------------|---------|------|------------|
+| username   | string  | 是   | 用户名      |
+| password   | string  | 是   | 密码        |
+| email      | string  | 否   | 邮箱        |
+| phone      | string  | 否   | 手机号      |
+
+响应参数：
+
+| 字段名     | 类型    | 描述         |
+|-----------|---------|--------------|
+| user_id   | int64   | 用户ID       |
+| token     | string  | 访问令牌     |
+
+#### 用户登录 (Login)
+接口描述：处理用户登录请求。
+
+请求方法：
 ```protobuf
 rpc Login(LoginRequest) returns (LoginResponse)
 ```
 
-### 刷新令牌
-```protobuf
-rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse)
-```
+请求参数：
 
-### 登出
-```protobuf
-rpc Logout(LogoutRequest) returns (LogoutResponse)
-```
+| 字段名      | 类型    | 必填 | 描述        |
+|------------|---------|------|------------|
+| username   | string  | 是   | 用户名      |
+| password   | string  | 是   | 密码        |
 
-### 验证令牌
-```protobuf
-rpc ValidateToken(ValidateTokenRequest) returns (ValidateTokenResponse)
-```
+响应参数：
 
-## 监控指标
+| 字段名          | 类型    | 描述         |
+|----------------|---------|--------------|
+| token          | string  | 访问令牌     |
+| refresh_token  | string  | 刷新令牌     |
 
-- auth_total: 认证请求总数
-- auth_duration_seconds: 认证处理时间
-- token_total: 令牌操作总数
+### 4. 错误码
 
-## 配置说明
-
-```yaml
-env: "dev"  # 环境：dev, test, prod
-
-kitex:
-  service: "auth"  # 服务名
-  address: ":8888" # 服务地址
-  log_level: "info" # 日志级别
-
-mysql:
-  dsn: "用户名:密码@tcp(主机:端口)/数据库名"
-
-redis:
-  address: "localhost:6379"
-  password: ""
-  db: 0
-
-registry:
-  registry_address:
-    - "localhost:8500"  # Consul地址
-
-jaeger:
-  host: "localhost"
-  port: 6831
-
-prometheus:
-  port: 9090
-  path: "/metrics"
-```
-
-## 部署
-
-支持以下部署方式：
-1. 直接部署
-2. Docker部署
-3. Kubernetes部署
-
-详细部署步骤请参考[部署文档](deploy/README.md)
-
-## 开发团队
-
-- 开发人员1
-- 开发人员2
+| 错误码    | 描述              |
+|----------|-------------------|
+| 4001001  | 请求参数无效       |
+| 5001001  | 内部服务器错误     |
+| 4001002  | 用户名已存在       |
+| 4001003  | 用户名或密码错误   |
+| 4001004  | 令牌无效或已过期   |
+| 4001005  | 登录重试次数超限   |
 
 ## 许可证
 
