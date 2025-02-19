@@ -1,15 +1,34 @@
 package errno
 
-import "errors"
+type ErrNo struct {
+	Code    int32
+	Message string
+}
+
+func (e ErrNo) Error() string {
+	return e.Message
+}
+
+func NewErrNo(code int32, msg string) *ErrNo {
+	return &ErrNo{
+		Code:    code,
+		Message: msg,
+	}
+}
 
 var (
-	ErrInvalidRequest         = errors.New("invalid request")
-	ErrEmailRequired         = errors.New("email is required")
-	ErrPasswordRequired      = errors.New("password is required")
-	ErrConfirmPasswordRequired = errors.New("confirm password is required")
-	ErrPasswordTooShort      = errors.New("password must be at least 8 characters")
-	ErrPasswordsDoNotMatch   = errors.New("passwords do not match")
-	ErrEmailAlreadyExists    = errors.New("email already exists")
-	ErrUserNotFound         = errors.New("user not found")
-	ErrInvalidPassword      = errors.New("invalid password")
+	Success = NewErrNo(0, "Success")
+	
+	// Common errors
+	ServiceErr = NewErrNo(10001, "Service is unable to start successfully")
+	ParamErr   = NewErrNo(10002, "Wrong Parameter has been given")
+	
+	// Auth errors
+	AuthorizationFailedErr = NewErrNo(20001, "Authorization failed")
+	
+	// User errors
+	UserAlreadyExistErr     = NewErrNo(30001, "User already exists")
+	UserNotExistErr         = NewErrNo(30002, "User does not exist")
+	PasswordIncorrectErr    = NewErrNo(30003, "Password is incorrect")
+	PasswordsDoNotMatchErr  = NewErrNo(30004, "Passwords do not match")
 )

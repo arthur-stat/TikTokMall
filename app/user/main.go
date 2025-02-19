@@ -2,101 +2,124 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net"
+	"net/http"
 	"time"
 
-	"TikTokMall/app/user/biz/dal"
-	"TikTokMall/app/user/conf"
-	"TikTokMall/app/user/kitex_gen/user/userservice"
-
+	"github.com/cloudwego/hertz/pkg/app/middlewares/server/recovery"
+	"github.com/cloudwego/hertz/pkg/app/server"
 	"github.com/cloudwego/kitex/pkg/klog"
 	"github.com/cloudwego/kitex/pkg/limit"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/cloudwego/kitex/server"
+	"github.com/hertz-contrib/cors"
 	"github.com/kitex-contrib/obs-opentelemetry/provider"
 	"github.com/kitex-contrib/obs-opentelemetry/tracing"
 	consul "github.com/kitex-contrib/registry-consul"
 	prometheus "github.com/kitex-contrib/monitor-prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 	"gopkg.in/natefinch/lumberjack.v2"
+
+	"TikTokMall/app/user/biz/dal"
+	"TikTokMall/app/user/biz/handler"
+	"TikTokMall/app/user/conf"
+	"TikTokMall/app/user/kitex_gen/user/userservice"
 )
 
 func main() {
 	// Initialize configuration
 	conf.Init()
+	config := conf.GetConf()
 
 	// Initialize logger
 	initLogger()
 
-	// Initialize data access layer (MySQL and Redis)
+	// Initialize dependencies
 	dal.Init()
 
-	// Initialize service options
-	opts := initServiceOptions()
-
-	// Create and run server
-	svr := userservice.NewServer(NewUserServiceImpl(), opts...)
-
-	if err := svr.Run(); err != nil {
-		klog.Fatal("server stopped with error:", err)
-	}
-}
-
-func initLogger() {
-	// Configure rotating log file
-	logger := &lumberjack.Logger{
-		Filename:   conf.GetConf().Kitex.LogFileName,
-		MaxSize:    conf.GetConf().Kitex.LogMaxSize,
-		MaxBackups: conf.GetConf().Kitex.LogMaxBackups,
-		MaxAge:     conf.GetConf().Kitex.LogMaxAge,
-		Compress:   true,
-	}
-
-	klog.SetLevel(conf.LogLevel())
-	klog.SetOutput(logger)
-}
-
-func initServiceOptions() []server.Option {
-	var opts []server.Option
-
-	// Service address
-	addr, err := net.ResolveTCPAddr("tcp", conf.GetConf().Kitex.Address)
-	if err != nil {
-		klog.Fatal("failed to resolve address:", err)
-	}
-	opts = append(opts, server.WithServiceAddr(addr))
-
-	// Service info
-	opts = append(opts, server.WithServerBasicInfo(&rpcinfo.EndpointBasicInfo{
-		ServiceName: conf.GetConf().Kitex.Service,
-	}))
-
-	// Rate limiting
-	opts = append(opts, server.WithLimit(&limit.Option{
-		MaxConnections: 2000,
-		MaxQPS:        500,
-	}))
-
-	// Consul service registration
-	r, err := consul.NewConsulRegister(conf.GetConf().Consul.Addr)
-	if err != nil {
-		klog.Fatal("failed to create consul register:", err)
-	}
-	opts = append(opts, server.WithRegistry(r))
-
-	// Prometheus metrics
-	opts = append(opts, server.WithTracer(prometheus.NewServerTracer(":9091", "/metrics")))
-
-	// OpenTelemetry tracing
+	// Initialize tracer
 	p := provider.NewOpenTelemetryProvider(
-		provider.WithServiceName(conf.GetConf().Kitex.Service),
-		provider.WithExportEndpoint(conf.GetConf().Jaeger.Endpoint),
+		provider.WithServiceName(config.Kitex.Service),
+		provider.WithExportEndpoint(config.Jaeger.Endpoint),
 	)
 	defer p.Shutdown(context.Background())
-	opts = append(opts, server.WithSuite(tracing.NewServerSuite()))
 
-	// Graceful shutdown
-	opts = append(opts, server.WithExitWaitTime(time.Second*3))
+	// Start Prometheus metrics server
+	go func() {
+		http.Handle("/metrics", promhttp.Handler())
+		if err := http.ListenAndServe(fmt.Sprintf(":%d", config.Prometheus.Port), nil); err != nil {
+			klog.Fatal("start prometheus server failed:", err)
+		}
+	}()
 
-	return opts
+	// Create Consul registry
+	r, err := consul.NewConsulRegister(config.Consul.Addr)
+	if err != nil {
+		klog.Fatal("create consul register failed:", err)
+	}
+
+	// Start HTTP server
+	go func() {
+		h := server.Default(
+			server.WithHostPorts(config.HTTP.Address),
+			server.WithRegistry(r, &registry.Info{
+				ServiceName: config.HTTP.ServiceName,
+				Addr:       utils.NewNetAddr("tcp", config.HTTP.Address),
+				Weight:     10,
+				Tags:       []string{"user", "http", "v1"},
+			}),
+		)
+
+		// Add CORS middleware
+		h.Use(cors.New(cors.Config{
+			AllowOrigins:     []string{"*"},
+			AllowMethods:     []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodOptions},
+			AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
+			ExposeHeaders:    []string{"Content-Length"},
+			AllowCredentials: true,
+			MaxAge:           12 * time.Hour,
+		}))
+
+		// Add recovery middleware
+		h.Use(recovery.Recovery())
+
+		// Initialize user handler
+		userHandler := handler.NewUserHandler()
+
+		// Register HTTP routes
+		v1 := h.Group("/v1/user")
+		{
+			v1.POST("/register", userHandler.Register)
+			v1.POST("/login", userHandler.Login)
+		}
+
+		klog.Info("HTTP server is starting on ", config.HTTP.Address)
+		if err := h.Run(); err != nil {
+			klog.Fatal("start http server failed:", err)
+		}
+	}()
+
+	// Initialize RPC server options
+	opts := []kitex.server.Option{
+		server.WithServiceAddr(&net.TCPAddr{Port: config.RPC.Port}),
+		server.WithRegistry(r),
+		server.WithLimit(&limit.Option{
+			MaxConnections: 2000,
+			MaxQPS:        500,
+		}),
+		server.WithTracer(prometheus.NewServerTracer(":9091", "/metrics")),
+		server.WithSuite(tracing.NewServerSuite()),
+		server.WithServerBasicInfo(&rpcinfo.EndpointBasicInfo{
+			ServiceName: config.RPC.ServiceName,
+		}),
+	}
+
+	// Create and start RPC server
+	svr := userservice.NewServer(NewUserServiceImpl(), opts...)
+	klog.Info("RPC server is starting on port ", config.RPC.Port)
+	if err := svr.Run(); err != nil {
+		klog.Fatal("start rpc server failed:", err)
+	}
 }

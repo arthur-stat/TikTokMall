@@ -1,6 +1,12 @@
+http:
+  service_name: "user-http"
+  address: ":8081"
+
+rpc:
+  service_name: "user-rpc"
+  port: 8001
+
 kitex:
-  service: "user"
-  address: ":8001"
   log_file_name: "log/user.log"
   log_max_size: 10
   log_max_backups: 5
@@ -17,6 +23,15 @@ redis:
   addr: "localhost:6379"
   password: ""
   db: 0
+
+consul:
+  addr: "localhost:8500"
+
+jaeger:
+  endpoint: "http://localhost:14268/api/traces"
+
+prometheus:
+  port: 9091
 
 logger:
   level: "debug"
