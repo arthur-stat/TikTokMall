@@ -3,7 +3,6 @@
 package product
 
 import (
-	api "TikTokMall/app/product/kitex_gen/api"
 	fmt "fmt"
 	fastpb "github.com/cloudwego/fastpb"
 )
@@ -703,5 +702,3 @@ var fieldIDToName_SearchProductsReq = map[int32]string{
 var fieldIDToName_SearchProductsResp = map[int32]string{
 	1: "Results",
 }
-
-var _ = api.File_api_proto
