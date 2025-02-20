@@ -6,37 +6,66 @@ import (
 
 	"github.com/cloudwego/hertz/pkg/app/middlewares/server/recovery"
 	"github.com/cloudwego/hertz/pkg/app/server"
+	"github.com/cloudwego/hertz/pkg/app/server/registry"
 	"github.com/cloudwego/hertz/pkg/common/hlog"
 	"github.com/hertz-contrib/cors"
-	consul "github.com/kitex-contrib/registry-consul"
 
 	"TikTokMall/app/auth/biz/dal/mysql"
 	"TikTokMall/app/auth/biz/dal/redis"
 	"TikTokMall/app/auth/biz/handler"
-	"TikTokMall/app/auth/biz/registry"
 	"TikTokMall/app/auth/biz/utils"
+	"TikTokMall/app/auth/conf"
+	"TikTokMall/app/auth/pkg/hertz"
+	"TikTokMall/app/auth/pkg/tracer"
 )
 
 func main() {
+	// 1. 初始化配置
+	if err := conf.Init(); err != nil {
+		hlog.Fatalf("初始化配置失败: %v", err)
+	}
+
+	// 2. 初始化追踪
+	tracer, closer, err := tracer.InitJaeger()
+	if err != nil {
+		hlog.Fatalf("初始化Jaeger失败: %v", err)
+	}
+	defer closer.Close()
+	_ = tracer // 暂时不使用 tracer
+
+	// 注释掉这段代码
+	/*
+		// 3. 初始化Prometheus
+		go func() {
+			http.Handle("/metrics", promhttp.Handler())
+			if err := http.ListenAndServe(fmt.Sprintf(":%d", config.Prometheus.Port), nil); err != nil {
+				hlog.Fatalf("启动Prometheus metrics服务失败: %v", err)
+			}
+		}()
+	*/
+
 	// 初始化数据库连接
 	if err := initDeps(); err != nil {
 		hlog.Fatalf("init dependencies failed: %v", err)
 	}
 
 	// 创建 Consul 注册器
-	r, err := consul.NewConsulRegister("localhost:8500")
+	r, err := hertz.NewConsulRegister("localhost:8500")
 	if err != nil {
 		hlog.Fatalf("create consul register failed: %v", err)
 	}
 
-	// 创建HTTP服务器
+	// 创建服务器
 	h := server.Default(
 		server.WithHostPorts(":8000"),
 		server.WithRegistry(r, &registry.Info{
 			ServiceName: "auth",
 			Addr:        utils.NewNetAddr("tcp", "localhost:8000"),
 			Weight:      10,
-			Tags:        []string{"auth", "v1"},
+			Tags: map[string]string{
+				"version": "v1",
+				"service": "auth",
+			},
 		}),
 	)
 
@@ -74,8 +103,8 @@ func main() {
 func initDeps() error {
 	// 初始化MySQL
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
-		getEnvOrDefault("MYSQL_USER", "root"),
-		getEnvOrDefault("MYSQL_PASSWORD", "123456"),
+		getEnvOrDefault("MYSQL_USER", "tiktok"),
+		getEnvOrDefault("MYSQL_PASSWORD", "tiktok123"),
 		getEnvOrDefault("MYSQL_HOST", "localhost"),
 		getEnvOrDefault("MYSQL_PORT", "3306"),
 		getEnvOrDefault("MYSQL_DATABASE", "tiktok_mall"),

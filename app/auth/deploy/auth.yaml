@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth
+  namespace: tiktok-mall
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: auth
+  template:
+    metadata:
+      labels:
+        app: auth
+    spec:
+      containers:
+      - name: auth
+        image: tiktok-mall/auth:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: GO_ENV
+          value: "prod"
+        volumeMounts:
+        - name: config
+          mountPath: /app/conf
+        - name: logs
+          mountPath: /var/log/auth
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: config
+        configMap:
+          name: auth-config
+      - name: logs
+        emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth
+  namespace: tiktok-mall
+spec:
+  selector:
+    app: auth
+  ports:
+  - port: 8080
+    targetPort: 8080
+  type: ClusterIP 

@@ -22,6 +22,7 @@ const (
 	TokenLength            = 32                 // 令牌长度（字节）
 	MaxLoginRetries        = 5                  // 最大登录重试次数
 	LoginRetryWindow       = time.Hour          // 登录重试窗口期
+	maxLoginAttempts       = 5                  // 最大登录尝试次数
 
 	// 用户状态
 	UserStatusNormal = 1 // 正常

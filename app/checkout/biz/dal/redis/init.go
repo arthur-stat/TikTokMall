@@ -2,23 +2,28 @@ package redis
 
 import (
 	"context"
+	"fmt"
+	"os"
+	"time"
 
 	"github.com/redis/go-redis/v9"
-	"TikTokMall/app/checkout/conf"
 )
 
-var (
-	RedisClient *redis.Client
-)
+var RDB *redis.Client
 
-func Init() {
-	RedisClient = redis.NewClient(&redis.Options{
-		Addr:     conf.GetConf().Redis.Address,
-		Username: conf.GetConf().Redis.Username,
-		Password: conf.GetConf().Redis.Password,
-		DB:       conf.GetConf().Redis.DB,
+func Init() error {
+	RDB = redis.NewClient(&redis.Options{
+		Addr:     fmt.Sprintf("%s:%s", os.Getenv("REDIS_HOST"), os.Getenv("REDIS_PORT")),
+		Password: os.Getenv("REDIS_PASSWORD"),
+		DB:       0,
 	})
-	if err := RedisClient.Ping(context.Background()).Err(); err != nil {
-		panic(err)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := RDB.Ping(ctx).Err(); err != nil {
+		return fmt.Errorf("无法连接到Redis: %w", err)
 	}
+
+	return nil
 }

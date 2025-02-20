@@ -1,0 +1,51 @@
+version: '3'
+
+services:
+  cart:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - GO_ENV=dev
+    depends_on:
+      - mysql
+      - redis
+      - consul
+      - jaeger
+      - prometheus
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: tiktok_mall
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+
+  consul:
+    image: consul:latest
+    ports:
+      - "8500:8500"
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "6831:6831/udp"
+      - "16686:16686"
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+
+volumes:
+  mysql_data: 

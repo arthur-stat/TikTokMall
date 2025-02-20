@@ -1,0 +1,34 @@
+service:
+  name: "checkout"
+  port: 8080
+
+mysql:
+  host: "mysql.tiktok.mall"
+  port: 3306
+  user: "prod_user"
+  password: "prod_password"
+  database: "tiktok_mall"
+
+registry:
+  registry_address:
+    - "consul.tiktok.mall:8500"
+  username: ""
+  password: ""
+
+jaeger:
+  host: "jaeger.tiktok.mall"
+  port: 6831
+  sampler_type: "const"
+  sampler_param: 1
+  log_spans: true
+
+prometheus:
+  port: 9090
+  path: "/metrics"
+
+log:
+  level: "info"
+  filename: "/var/log/checkout/checkout.log"
+  max_size: 100
+  max_age: 7
+  max_backups: 5 

@@ -1,20 +1,37 @@
-kitex:
-  service: "checkout"
-  address: ":8888"
-  log_level: info
-  log_file_name: "log/kitex.log"
-  log_max_size: 10
-  log_max_age: 3
-  log_max_backups: 50
+service:
+  name: "checkout"
+  port: 8080
+
+mysql:
+  host: "localhost"
+  port: 3306
+  user: "root"
+  password: "root"
+  database: "tiktok_mall"
 
 registry:
   registry_address:
-    - 127.0.0.1:2379
+    - "localhost:8500"
   username: ""
   password: ""
 
-mysql:
-  dsn: "gorm:gorm@tcp(127.0.0.1:3306)/gorm?charset=utf8mb4&parseTime=True&loc=Local"
+jaeger:
+  host: "localhost"
+  port: 6831
+  sampler_type: "const"
+  sampler_param: 1
+  log_spans: true
+
+prometheus:
+  port: 9090
+  path: "/metrics"
+
+log:
+  level: "info"
+  filename: "logs/checkout.log"
+  max_size: 100    # megabytes
+  max_age: 7       # days
+  max_backups: 5
 
 redis:
   address: "127.0.0.1:6379"

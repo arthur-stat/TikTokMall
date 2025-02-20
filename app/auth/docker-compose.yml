@@ -1,0 +1,55 @@
+version: '3'
+
+services:
+  auth:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - GO_ENV=dev
+    depends_on:
+      - mysql
+      - redis
+      - consul
+      - jaeger
+      - prometheus
+
+  mysql:
+    image: mysql:8.0
+    container_name: tiktok_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: tiktok_mall
+      MYSQL_USER: tiktok
+      MYSQL_PASSWORD: tiktok123
+    command: --default-authentication-plugin=mysql_native_password
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  redis:
+    image: redis:latest
+    ports:
+      - "6380:6379"
+
+  consul:
+    image: consul:latest
+    ports:
+      - "8501:8500"
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "6832:6831/udp"
+      - "16687:16686"
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9091:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+
+volumes:
+  mysql_data: 

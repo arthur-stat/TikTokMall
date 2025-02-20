@@ -7,6 +7,7 @@ import "api.proto";
 
 option go_package = "/checkout";
 
+// 服务定义
 service CheckoutService {
   rpc Checkout(CheckoutReq) returns (CheckoutResp) {
     option (api.post) = "/checkout";

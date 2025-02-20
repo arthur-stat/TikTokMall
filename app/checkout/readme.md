@@ -1,26 +1,120 @@
-# *** Project
+# 结账服务 (Checkout Service)
 
-## introduce
+## 介绍
 
-- Use the [Kitex](https://github.com/cloudwego/kitex/) framework
-- Generating the base code for unit tests.
-- Provides basic config functions
-- Provides the most basic MVC code hierarchy.
+结账服务是 TikTokMall 电商平台的核心服务之一，负责处理用户的订单结算、支付流程和地址管理等功能。该服务基于 [Kitex](https://github.com/cloudwego/kitex/) 框架开发，提供了高性能的 RPC 接口，支持分布式部署和服务发现。
 
-## Directory structure
+服务默认端口：
+- RPC 服务端口：8080
+- Prometheus 监控端口：9090
+- 健康检查端口：8080/health
 
-|  catalog   | introduce  |
-|  ----  | ----  |
-| conf  | Configuration files |
-| main.go  | Startup file |
-| handler.go  | Used for request processing return of response. |
-| kitex_gen  | kitex generated code |
-| biz/service  | The actual business logic. |
-| biz/dal  | Logic for operating the storage layer |
+## 主要功能
 
-## How to run
+- **订单处理**：创建新订单，管理订单状态，提供订单详情查询。
+- **支付集成**：对接支付服务，处理支付流程，追踪支付状态。
+- **购物车结算**：处理购物车商品结算，进行库存检查和价格计算。
+- **地址管理**：处理用户收货地址，进行地址验证和格式化。
+- **用户信息处理**：验证用户信息，处理信用卡支付信息。
 
-```shell
-sh build.sh
-sh output/bootstrap.sh
+## 目录结构
+
+| 目录            | 介绍                                                    |
+|----------------|--------------------------------------------------------|
+| `conf`         | 配置文件目录，包含服务的配置信息                        |
+| `main.go`      | 服务启动文件，初始化服务并启动 RPC 服务                |
+| `handler`      | 请求处理层，负责接收和处理 RPC 请求                    |
+| `kitex_gen`    | Kitex 框架自动生成的代码，包含 RPC 接口定义            |
+| `biz/service`  | 业务逻辑层，实现订单处理、支付等核心业务逻辑           |
+| `biz/dal`      | 数据访问层，负责与数据库和缓存交互                     |
+| `pkg`          | 公共工具包，包含监控、追踪等组件                       |
+| `deploy`       | 部署相关配置和脚本                                     |
+| `scripts`      | 构建、测试和部署脚本                                   |
+
+## 依赖项
+
+结账服务依赖以下外部服务和技术栈：
+
+- **MySQL**：用于持久化存储订单信息和交易记录
+- **Redis**：用于缓存购物车数据和会话管理
+- **Consul**：用于服务注册与发现
+- **Jaeger**：用于分布式追踪
+- **Prometheus**：用于监控指标收集
+- **Payment Service**：用于处理实际支付流程
+
+## 如何运行
+
+### 1. 环境配置
+
+确保已安装以下工具和环境：
+
+- Go 1.16 或更高版本
+- MySQL
+- Redis
+- Consul
+- Docker & Docker Compose
+
+### 2. 启动服务
+
+进入项目目录：
+```bash
+cd app/checkout
 ```
+
+安装依赖：
+```bash
+go mod tidy
+```
+
+启动依赖服务：
+```bash
+docker-compose up -d
+```
+
+启动结账服务：
+```bash
+sh scripts/build.sh
+./output/bin/checkout
+```
+
+### 3. API 接口
+
+#### 结账请求 (Run)
+接口描述：处理用户的结账请求，包括订单创建和支付处理。
+
+请求方法：
+```protobuf
+rpc Run(CheckoutReq) returns (CheckoutResp)
+```
+
+请求参数：
+
+| 字段名      | 类型           | 必填 | 描述        |
+|------------|----------------|------|------------|
+| user_id    | uint32        | 是   | 用户ID      |
+| firstname  | string        | 是   | 名字        |
+| lastname   | string        | 是   | 姓氏        |
+| email      | string        | 是   | 邮箱        |
+| address    | Address       | 是   | 地址信息     |
+| credit_card| CreditCardInfo| 是   | 信用卡信息   |
+
+响应参数：
+
+| 字段名          | 类型    | 描述    |
+|----------------|---------|---------|
+| order_id       | string  | 订单ID   |
+| transaction_id | string  | 交易ID   |
+
+### 4. 错误码
+
+| 错误码    | 描述          |
+|----------|---------------|
+| 4001001  | 请求参数无效   |
+| 5001001  | 内部服务器错误 |
+| 4001002  | 订单创建失败   |
+| 4001003  | 支付处理失败   |
+| 4001004  | 地址验证失败   |
+
+## 许可证
+
+MIT License 
