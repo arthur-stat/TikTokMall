@@ -30,7 +30,8 @@ message Product {
   string description = 3;
   string picture = 4;
   float price = 5;
-  repeated string categories = 6;
+  uint32 stock = 6;
+  repeated string categories = 7;
 }
 
 message ListProductsResp {
