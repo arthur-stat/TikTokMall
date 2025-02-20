@@ -69,7 +69,7 @@ func startHTTPServer() {
 		hserver.WithKeepAlive(true),
 	)
 
-	v1 := h.Group("/v1/payment")
+	v1 := h.Group("/payment")
 	{
 		v1.GET("/health", handler.HealthHandler)
 		v1.POST("/charge", handler.ChargeHandler)
@@ -100,8 +100,8 @@ func registerServiceToConsul(serviceName, host string, port int, protocol string
 		Port:    port,               // 服务端口
 		Tags:    []string{protocol}, // 服务协议类型
 		Check: &api.AgentServiceCheck{ // 健康检查配置
-			HTTP:     "http://localhost:8005/health", // 健康检查路径
-			Interval: "10s",                          // 健康检查时间间隔
+			HTTP:     "http://localhost:8005/payment/health", // 健康检查路径
+			Interval: "10s",                                  // 健康检查时间间隔
 		},
 	}
 

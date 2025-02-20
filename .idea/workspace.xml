@@ -6,6 +6,11 @@
   <component name="ChangeListManager">
     <list default="true" id="916fdc05-e619-4350-86c0-0294aeb3596f" name="更改" comment="完成payment服务的简单健康检查">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/go.mod" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/go.sum" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/payment/biz/dal/redis/payment.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/payment/biz/dal/redis/payment.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/payment/biz/service/charge.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/payment/biz/service/charge.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/payment/handler.go" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/app/payment/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/payment/main.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/payment/readme.md" beforeDir="false" afterPath="$PROJECT_DIR$/app/payment/readme.md" afterDir="false" />
     </list>
@@ -57,7 +62,7 @@
     &quot;git-widget-placeholder&quot;: &quot;feature/payment-service&quot;,
     &quot;go.import.settings.migrated&quot;: &quot;true&quot;,
     &quot;go.sdk.automatically.set&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/99628&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/Code/GoWeb&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,

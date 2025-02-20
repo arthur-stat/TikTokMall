@@ -10,14 +10,14 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// SetPaymentCache 将支付记录缓存到 Redis，过期时间设置为 1 小时
+// SetPaymentCache 将支付记录缓存到 Redis，过期时间设置为 24 小时
 func SetPaymentCache(ctx context.Context, payment *model.Payments) error {
 	key := fmt.Sprintf("payment:%d", payment.OrderID)
 	data, err := json.Marshal(payment)
 	if err != nil {
 		return fmt.Errorf("failed to marshal payment data: %v", err)
 	}
-	err = Client.Set(ctx, key, data, 1*time.Hour).Err()
+	err = Client.Set(ctx, key, data, 24*time.Hour).Err()
 	if err != nil {
 		return fmt.Errorf("failed to set payment cache: %v", err)
 	}
