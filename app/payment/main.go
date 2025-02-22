@@ -91,6 +91,7 @@ func startHTTPServer() {
 	{
 		v1.GET("/health", handler.HealthHandler)
 		v1.POST("/charge", handler.ChargeHandler)
+		v1.POST("/refund", handler.RefundHandler)
 	}
 
 	err = h.Run()
