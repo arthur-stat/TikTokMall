@@ -62,7 +62,7 @@ func main() {
 func startHTTPServer() {
 	// 创建Consul客户端
 	config := &api.Config{
-		Address: "localhost:8500", // Consul地址
+		Address: "localhost:8501", // Consul地址
 	}
 	client, err := api.NewClient(config)
 	if err != nil {
