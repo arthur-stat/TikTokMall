@@ -1,31 +1,41 @@
 package main
 
 import (
+	"TikTokMall/app/product/biz/service"
+	"TikTokMall/app/product/factory"
 	product "TikTokMall/app/product/kitex_gen/product"
 	"context"
-	"TikTokMall/app/product/biz/service"
 )
 
 // ProductCatalogServiceImpl implements the last service interface defined in the IDL.
-type ProductCatalogServiceImpl struct{}
+type ProductCatalogServiceImpl struct {
+	factory *factory.ProductFactory
+}
+
+// NewProductCatalogServiceImpl creates a new ProductCatalogServiceImpl instance
+func NewProductCatalogServiceImpl() *ProductCatalogServiceImpl {
+	return &ProductCatalogServiceImpl{
+		factory: factory.GetProductFactory(),
+	}
+}
 
 // ListProducts implements the ProductCatalogServiceImpl interface.
 func (s *ProductCatalogServiceImpl) ListProducts(ctx context.Context, req *product.ListProductsReq) (resp *product.ListProductsResp, err error) {
-	resp, err = service.NewListProductsService(ctx).Run(req)
-
+    categoryQuery := s.factory.NewCategoryQuery(ctx)
+	resp, err = service.NewListProductsService(ctx, categoryQuery).Run(req)
 	return resp, err
 }
 
 // GetProduct implements the ProductCatalogServiceImpl interface.
 func (s *ProductCatalogServiceImpl) GetProduct(ctx context.Context, req *product.GetProductReq) (resp *product.GetProductResp, err error) {
-	resp, err = service.NewGetProductService(ctx).Run(req)
-
+	productQuery := s.factory.NewProductQuery(ctx)
+	resp, err = service.NewGetProductService(ctx, productQuery).Run(req)
 	return resp, err
 }
 
 // SearchProducts implements the ProductCatalogServiceImpl interface.
 func (s *ProductCatalogServiceImpl) SearchProducts(ctx context.Context, req *product.SearchProductsReq) (resp *product.SearchProductsResp, err error) {
-	resp, err = service.NewSearchProductsService(ctx).Run(req)
-
+	productQuery := s.factory.NewProductQuery(ctx)
+	resp, err = service.NewSearchProductsService(ctx, productQuery).Run(req)
 	return resp, err
 }

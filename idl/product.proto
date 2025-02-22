@@ -2,26 +2,19 @@ syntax = "proto3";
 
 package product;
 
-import "api.proto";
-
 option go_package = "/product";
 
 service ProductCatalogService {
-  rpc ListProducts(ListProductsReq) returns (ListProductsResp) {
-    option (api.get) = "/product/list";
-  }
-  rpc GetProduct(GetProductReq) returns (GetProductResp) {
-    option (api.get) = "/product/{id}";
-  }
-  rpc SearchProducts(SearchProductsReq) returns (SearchProductsResp) {
-    option (api.get) = "/product/search";
-  }
+  rpc ListProducts(ListProductsReq) returns (ListProductsResp) {}
+  rpc GetProduct(GetProductReq) returns (GetProductResp) {}
+  rpc SearchProducts(SearchProductsReq) returns (SearchProductsResp) {}
 }
 
-message ListProductsReq {
-  int32 page = 1 [(api.query) = "page"];
-  int64 pageSize = 2 [(api.query) = "pageSize"];
-  string categoryName = 3 [(api.query) = "categoryName"];
+message ListProductsReq{
+  int32 page = 1;
+  int64 pageSize = 2;
+
+  string categoryName = 3;
 }
 
 message Product {
@@ -30,7 +23,9 @@ message Product {
   string description = 3;
   string picture = 4;
   float price = 5;
-  repeated string categories = 6;
+  uint32 stock = 6;
+
+  repeated string categories = 7;
 }
 
 message ListProductsResp {
@@ -38,7 +33,7 @@ message ListProductsResp {
 }
 
 message GetProductReq {
-  uint32 id = 1 [(api.path) = "id"];
+  uint32 id = 1;
 }
 
 message GetProductResp {
@@ -46,7 +41,7 @@ message GetProductResp {
 }
 
 message SearchProductsReq {
-  string query = 1 [(api.query) = "query"];
+  string query = 1;
 }
 
 message SearchProductsResp {

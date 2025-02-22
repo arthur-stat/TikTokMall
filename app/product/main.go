@@ -1,23 +1,28 @@
 package main
-
 import (
+
 	"net"
+	"os"
 	"time"
+
+	"TikTokMall/app/product/conf"
+	"TikTokMall/app/product/kitex_gen/product/productcatalogservice"
 
 	"github.com/cloudwego/kitex/pkg/klog"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	"github.com/cloudwego/kitex/server"
-	kitexlogrus "github.com/kitex-contrib/obs-opentelemetry/logging/logrus"
-	"TikTokMall/app/product/conf"
-	"TikTokMall/app/product/kitex_gen/product/productcatalogservice"
+	"github.com/joho/godotenv"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 func main() {
+	_ = godotenv.Load()
+
 	opts := kitexInit()
 
-	svr := productcatalogservice.NewServer(new(ProductCatalogServiceImpl), opts...)
+    productCatalogServiceImpl := NewProductCatalogServiceImpl()
+	svr := productcatalogservice.NewServer(productCatalogServiceImpl, opts...)
 
 	err := svr.Run()
 	if err != nil {
@@ -39,21 +44,24 @@ func kitexInit() (opts []server.Option) {
 	}))
 
 	// klog
-	logger := kitexlogrus.NewLogger()
-	klog.SetLogger(logger)
 	klog.SetLevel(conf.LogLevel())
-	asyncWriter := &zapcore.BufferedWriteSyncer{
-		WS: zapcore.AddSync(&lumberjack.Logger{
-			Filename:   conf.GetConf().Kitex.LogFileName,
-			MaxSize:    conf.GetConf().Kitex.LogMaxSize,
-			MaxBackups: conf.GetConf().Kitex.LogMaxBackups,
-			MaxAge:     conf.GetConf().Kitex.LogMaxAge,
-		}),
-		FlushInterval: time.Minute,
+	if conf.GetEnv() == "test" || conf.GetEnv() == "dev" {
+		klog.SetOutput(os.Stdout)
+	} else {
+		// "online"
+		asyncWriter := &zapcore.BufferedWriteSyncer{
+			WS: zapcore.AddSync(&lumberjack.Logger{
+				Filename:   conf.GetConf().Kitex.LogFileName,
+				MaxSize:    conf.GetConf().Kitex.LogMaxSize,
+				MaxBackups: conf.GetConf().Kitex.LogMaxBackups,
+				MaxAge:     conf.GetConf().Kitex.LogMaxAge,
+			}),
+			FlushInterval: time.Minute,
+		}
+		klog.SetOutput(asyncWriter)
+		server.RegisterShutdownHook(func() {
+			asyncWriter.Sync()
+		})
 	}
-	klog.SetOutput(asyncWriter)
-	server.RegisterShutdownHook(func() {
-		asyncWriter.Sync()
-	})
 	return
 }

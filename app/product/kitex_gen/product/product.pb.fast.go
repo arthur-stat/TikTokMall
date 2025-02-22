@@ -3,7 +3,6 @@
 package product
 
 import (
-	api "TikTokMall/app/product/kitex_gen/api"
 	fmt "fmt"
 	fastpb "github.com/cloudwego/fastpb"
 )
@@ -90,6 +89,11 @@ func (x *Product) FastRead(buf []byte, _type int8, number int32) (offset int, er
 		if err != nil {
 			goto ReadFieldError
 		}
+	case 7:
+		offset, err = x.fastReadField7(buf, _type)
+		if err != nil {
+			goto ReadFieldError
+		}
 	default:
 		offset, err = fastpb.Skip(buf, _type, number)
 		if err != nil {
@@ -129,6 +133,11 @@ func (x *Product) fastReadField5(buf []byte, _type int8) (offset int, err error)
 }
 
 func (x *Product) fastReadField6(buf []byte, _type int8) (offset int, err error) {
+	x.Stock, offset, err = fastpb.ReadUint32(buf, _type)
+	return offset, err
+}
+
+func (x *Product) fastReadField7(buf []byte, _type int8) (offset int, err error) {
 	var v string
 	v, offset, err = fastpb.ReadString(buf, _type)
 	if err != nil {
@@ -322,6 +331,7 @@ func (x *Product) FastWrite(buf []byte) (offset int) {
 	offset += x.fastWriteField4(buf[offset:])
 	offset += x.fastWriteField5(buf[offset:])
 	offset += x.fastWriteField6(buf[offset:])
+	offset += x.fastWriteField7(buf[offset:])
 	return offset
 }
 
@@ -366,11 +376,19 @@ func (x *Product) fastWriteField5(buf []byte) (offset int) {
 }
 
 func (x *Product) fastWriteField6(buf []byte) (offset int) {
+	if x.Stock == 0 {
+		return offset
+	}
+	offset += fastpb.WriteUint32(buf[offset:], 6, x.GetStock())
+	return offset
+}
+
+func (x *Product) fastWriteField7(buf []byte) (offset int) {
 	if len(x.Categories) == 0 {
 		return offset
 	}
 	for i := range x.GetCategories() {
-		offset += fastpb.WriteString(buf[offset:], 6, x.GetCategories()[i])
+		offset += fastpb.WriteString(buf[offset:], 7, x.GetCategories()[i])
 	}
 	return offset
 }
@@ -503,6 +521,7 @@ func (x *Product) Size() (n int) {
 	n += x.sizeField4()
 	n += x.sizeField5()
 	n += x.sizeField6()
+	n += x.sizeField7()
 	return n
 }
 
@@ -547,11 +566,19 @@ func (x *Product) sizeField5() (n int) {
 }
 
 func (x *Product) sizeField6() (n int) {
+	if x.Stock == 0 {
+		return n
+	}
+	n += fastpb.SizeUint32(6, x.GetStock())
+	return n
+}
+
+func (x *Product) sizeField7() (n int) {
 	if len(x.Categories) == 0 {
 		return n
 	}
 	for i := range x.GetCategories() {
-		n += fastpb.SizeString(6, x.GetCategories()[i])
+		n += fastpb.SizeString(7, x.GetCategories()[i])
 	}
 	return n
 }
@@ -652,7 +679,8 @@ var fieldIDToName_Product = map[int32]string{
 	3: "Description",
 	4: "Picture",
 	5: "Price",
-	6: "Categories",
+	6: "Stock",
+	7: "Categories",
 }
 
 var fieldIDToName_ListProductsResp = map[int32]string{
@@ -674,5 +702,3 @@ var fieldIDToName_SearchProductsReq = map[int32]string{
 var fieldIDToName_SearchProductsResp = map[int32]string{
 	1: "Results",
 }
-
-var _ = api.File_api_proto

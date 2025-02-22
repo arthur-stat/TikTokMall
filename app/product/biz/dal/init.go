@@ -2,10 +2,10 @@ package dal
 
 import (
 	"TikTokMall/app/product/biz/dal/mysql"
-	"TikTokMall/app/product/biz/dal/redis"
+	// "TikTokMall/app/product/biz/dal/redis"
 )
 
 func Init() {
-	redis.Init()
+	// redis.Init()
 	mysql.Init()
 }
