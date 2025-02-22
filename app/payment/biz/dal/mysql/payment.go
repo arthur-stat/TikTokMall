@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"gorm.io/gorm"
+	"time"
 )
 
 // CreatePayment 插入一条支付记录到数据库
@@ -27,4 +28,26 @@ func GetPaymentByOrderID(db *gorm.DB, ctx context.Context, orderID int64) (*mode
 		return nil, err
 	}
 	return &payment, nil
+}
+
+func GetPaymentByTransactionID(db *gorm.DB, ctx context.Context, transactionID string) (*model.Payments, error) {
+	var payment model.Payments
+	err := db.WithContext(ctx).Where("transaction_id = ?", transactionID).First(&payment).Error
+	if err != nil {
+		return nil, err
+	}
+	return &payment, nil
+}
+
+func StatusToRefundStatus(db *gorm.DB, ctx context.Context, transactionID string, refundID string) error {
+	var payment model.Payments
+	err := db.WithContext(ctx).Where("transaction_id = ?", transactionID).First(&payment).Error
+	if err != nil {
+		return err
+	}
+	payment.RefundID = refundID
+	payment.Status = 2
+	payment.UpdatedAt = time.Now()
+	err = db.WithContext(ctx).Where("transaction_id = ?", transactionID).Updates(&payment).Error
+	return err
 }

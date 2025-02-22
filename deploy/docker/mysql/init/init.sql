@@ -93,13 +93,15 @@ CREATE TABLE IF NOT EXISTS `payments` (
     `order_id` bigint NOT NULL,
     `user_id` bigint NOT NULL,
     `amount` decimal(10,2) NOT NULL,
-    `status` tinyint NOT NULL DEFAULT 1,
+    `status` tinyint NOT NULL DEFAULT 0, -- 0:未支付, 1:成功支付, 2:已退款
     `payment_method` varchar(32) NOT NULL,
     `transaction_id` varchar(128),
+    `refund_id` varchar(128) DEFAULT NULL,
     `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     UNIQUE KEY `idx_order_id` (`order_id`),
     UNIQUE KEY `idx_transaction_id` (`transaction_id`),
+    UNIQUE KEY `idx_refund_id` (`refund_id`),
     KEY `idx_user_id` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci; 

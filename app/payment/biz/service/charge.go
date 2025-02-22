@@ -61,6 +61,7 @@ func (s *ChargeService) Run(req *payment.ChargeReq) (resp *payment.ChargeResp, e
 		UserID:        req.UserId,
 		OrderID:       req.OrderId,
 		TransactionID: transactionId.String(),
+		Status:        1,
 		Amount:        req.Amount,
 		PaymentMethod: req.PaymentMethod,
 		CreatedAt:     time.Now(),

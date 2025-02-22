@@ -6,10 +6,14 @@ import (
 	"TikTokMall/app/payment/handler"
 	"TikTokMall/app/payment/kitex_gen/payment/paymentservice"
 	hserver "github.com/cloudwego/hertz/pkg/app/server"
+	"github.com/cloudwego/hertz/pkg/app/server/registry"
+	"github.com/cloudwego/hertz/pkg/common/hlog"
+	"github.com/cloudwego/hertz/pkg/common/utils"
 	"github.com/cloudwego/kitex/pkg/klog"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 	kserver "github.com/cloudwego/kitex/server"
 	"github.com/hashicorp/consul/api"
+	"github.com/hertz-contrib/registry/consul"
 	"github.com/joho/godotenv"
 	kitexlogrus "github.com/kitex-contrib/obs-opentelemetry/logging/logrus"
 	"go.uber.org/zap/zapcore"
@@ -36,10 +40,8 @@ func main() {
 
 	// 增加计数
 	wg.Add(1)
-
 	// 创建支付服务的 handler 实例
-	svr := paymentservice.NewServer(handler.NewPaymentServiceImpl(), opts...)
-
+	svr := paymentservice.NewServer(new(handler.PaymentServiceImpl), opts...)
 	// 启动服务
 	go func() {
 		defer wg.Done() // 服务运行完毕后减少计数
@@ -49,24 +51,40 @@ func main() {
 		}
 	}()
 
-	// 启动 HTTP 服务
+	// 启动 HTTP 服务并注册服务
 	go startHTTPServer()
-
-	// 启动Consul客户端并注册服务
-	err = registerServiceToConsul("payment", "localhost", 8005, "http")
-	if err != nil {
-		klog.Error("Failed to register service to Consul: %v", err)
-	}
 
 	// 等待所有 goroutines 完成
 	wg.Wait()
 }
 
-// startHTTPServer 启动 HTTP 服务
+// startHTTPServer 启动 HTTP 服务并注册服务
 func startHTTPServer() {
+	// 创建Consul客户端
+	config := &api.Config{
+		Address: "localhost:8500", // Consul地址
+	}
+	client, err := api.NewClient(config)
+	if err != nil {
+		hlog.Error("Failed to create Consul client: %v", err)
+	}
+	check := &api.AgentServiceCheck{
+		HTTP:     "http://localhost:8005/payment/health", // 健康检查路径
+		Interval: "10s",                                  // 健康检查时间间隔
+	}
+	r := consul.NewConsulRegister(client, consul.WithCheck(check))
 	h := hserver.Default(
 		hserver.WithHostPorts(":8005"),
 		hserver.WithKeepAlive(true),
+		hserver.WithRegistry(r, &registry.Info{
+			ServiceName: "payment-http",
+			Addr:        utils.NewNetAddr("tcp", "localhost:8005"),
+			Weight:      10,
+			Tags: map[string]string{
+				"version": "v1",
+				"service": "payment",
+			},
+		}),
 	)
 
 	v1 := h.Group("/payment")
@@ -75,44 +93,10 @@ func startHTTPServer() {
 		v1.POST("/charge", handler.ChargeHandler)
 	}
 
-	err := h.Run()
+	err = h.Run()
 	if err != nil {
 		klog.Error("Failed to start HTTP server: %v", err)
 	}
-}
-
-// registerServiceToConsul 将服务注册到 Consul
-func registerServiceToConsul(serviceName, host string, port int, protocol string) error {
-	// 创建Consul客户端
-	config := &api.Config{
-		Address: "localhost:8500", // Consul地址
-	}
-	client, err := api.NewClient(config)
-	if err != nil {
-		return err
-	}
-
-	// 注册服务到 Consul
-	registration := &api.AgentServiceRegistration{
-		ID:      serviceName,        // 服务ID
-		Name:    serviceName,        // 服务名称
-		Address: host,               // 服务地址
-		Port:    port,               // 服务端口
-		Tags:    []string{protocol}, // 服务协议类型
-		Check: &api.AgentServiceCheck{ // 健康检查配置
-			HTTP:     "http://localhost:8005/payment/health", // 健康检查路径
-			Interval: "10s",                                  // 健康检查时间间隔
-		},
-	}
-
-	// 注册服务到Consul
-	err = client.Agent().ServiceRegister(registration)
-	if err != nil {
-		return err
-	}
-
-	klog.Info("Service %s registered successfully", serviceName)
-	return nil
 }
 
 func kitexInit() (opts []kserver.Option) {

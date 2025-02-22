@@ -22,6 +22,13 @@ var serviceMethods = map[string]kitex.MethodInfo{
 		false,
 		kitex.WithStreamingMode(kitex.StreamingUnary),
 	),
+	"Refund": kitex.NewMethodInfo(
+		refundHandler,
+		newRefundArgs,
+		newRefundResult,
+		false,
+		kitex.WithStreamingMode(kitex.StreamingUnary),
+	),
 }
 
 var (
@@ -241,6 +248,159 @@ func (p *ChargeResult) GetResult() interface{} {
 	return p.Success
 }
 
+func refundHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+	switch s := arg.(type) {
+	case *streaming.Args:
+		st := s.Stream
+		req := new(payment.RefundReq)
+		if err := st.RecvMsg(req); err != nil {
+			return err
+		}
+		resp, err := handler.(payment.PaymentService).Refund(ctx, req)
+		if err != nil {
+			return err
+		}
+		return st.SendMsg(resp)
+	case *RefundArgs:
+		success, err := handler.(payment.PaymentService).Refund(ctx, s.Req)
+		if err != nil {
+			return err
+		}
+		realResult := result.(*RefundResult)
+		realResult.Success = success
+		return nil
+	default:
+		return errInvalidMessageType
+	}
+}
+func newRefundArgs() interface{} {
+	return &RefundArgs{}
+}
+
+func newRefundResult() interface{} {
+	return &RefundResult{}
+}
+
+type RefundArgs struct {
+	Req *payment.RefundReq
+}
+
+func (p *RefundArgs) FastRead(buf []byte, _type int8, number int32) (n int, err error) {
+	if !p.IsSetReq() {
+		p.Req = new(payment.RefundReq)
+	}
+	return p.Req.FastRead(buf, _type, number)
+}
+
+func (p *RefundArgs) FastWrite(buf []byte) (n int) {
+	if !p.IsSetReq() {
+		return 0
+	}
+	return p.Req.FastWrite(buf)
+}
+
+func (p *RefundArgs) Size() (n int) {
+	if !p.IsSetReq() {
+		return 0
+	}
+	return p.Req.Size()
+}
+
+func (p *RefundArgs) Marshal(out []byte) ([]byte, error) {
+	if !p.IsSetReq() {
+		return out, nil
+	}
+	return proto.Marshal(p.Req)
+}
+
+func (p *RefundArgs) Unmarshal(in []byte) error {
+	msg := new(payment.RefundReq)
+	if err := proto.Unmarshal(in, msg); err != nil {
+		return err
+	}
+	p.Req = msg
+	return nil
+}
+
+var RefundArgs_Req_DEFAULT *payment.RefundReq
+
+func (p *RefundArgs) GetReq() *payment.RefundReq {
+	if !p.IsSetReq() {
+		return RefundArgs_Req_DEFAULT
+	}
+	return p.Req
+}
+
+func (p *RefundArgs) IsSetReq() bool {
+	return p.Req != nil
+}
+
+func (p *RefundArgs) GetFirstArgument() interface{} {
+	return p.Req
+}
+
+type RefundResult struct {
+	Success *payment.RefundResp
+}
+
+var RefundResult_Success_DEFAULT *payment.RefundResp
+
+func (p *RefundResult) FastRead(buf []byte, _type int8, number int32) (n int, err error) {
+	if !p.IsSetSuccess() {
+		p.Success = new(payment.RefundResp)
+	}
+	return p.Success.FastRead(buf, _type, number)
+}
+
+func (p *RefundResult) FastWrite(buf []byte) (n int) {
+	if !p.IsSetSuccess() {
+		return 0
+	}
+	return p.Success.FastWrite(buf)
+}
+
+func (p *RefundResult) Size() (n int) {
+	if !p.IsSetSuccess() {
+		return 0
+	}
+	return p.Success.Size()
+}
+
+func (p *RefundResult) Marshal(out []byte) ([]byte, error) {
+	if !p.IsSetSuccess() {
+		return out, nil
+	}
+	return proto.Marshal(p.Success)
+}
+
+func (p *RefundResult) Unmarshal(in []byte) error {
+	msg := new(payment.RefundResp)
+	if err := proto.Unmarshal(in, msg); err != nil {
+		return err
+	}
+	p.Success = msg
+	return nil
+}
+
+func (p *RefundResult) GetSuccess() *payment.RefundResp {
+	if !p.IsSetSuccess() {
+		return RefundResult_Success_DEFAULT
+	}
+	return p.Success
+}
+
+func (p *RefundResult) SetSuccess(x interface{}) {
+	p.Success = x.(*payment.RefundResp)
+}
+
+func (p *RefundResult) IsSetSuccess() bool {
+	return p.Success != nil
+}
+
+func (p *RefundResult) GetResult() interface{} {
+	return p.Success
+}
+
 type kClient struct {
 	c client.Client
 }
@@ -256,6 +416,16 @@ func (p *kClient) Charge(ctx context.Context, Req *payment.ChargeReq) (r *paymen
 	_args.Req = Req
 	var _result ChargeResult
 	if err = p.c.Call(ctx, "Charge", &_args, &_result); err != nil {
+		return
+	}
+	return _result.GetSuccess(), nil
+}
+
+func (p *kClient) Refund(ctx context.Context, Req *payment.RefundReq) (r *payment.RefundResp, err error) {
+	var _args RefundArgs
+	_args.Req = Req
+	var _result RefundResult
+	if err = p.c.Call(ctx, "Refund", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil

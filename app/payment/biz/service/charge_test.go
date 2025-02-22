@@ -18,14 +18,14 @@ import (
 func TestMain(m *testing.M) {
 	// 设置 MySQL 相关环境变量
 	os.Setenv("MYSQL_HOST", "localhost")
-	os.Setenv("MYSQL_PORT", "3306")
+	os.Setenv("MYSQL_PORT", "3307")
 	os.Setenv("MYSQL_USER", "gorm")
 	os.Setenv("MYSQL_PASSWORD", "gorm")
 	os.Setenv("MYSQL_DATABASE", "gorm")
 
 	// 设置 Redis 相关环境变量
 	os.Setenv("REDIS_HOST", "localhost")
-	os.Setenv("REDIS_PORT", "6379")
+	os.Setenv("REDIS_PORT", "6380")
 	os.Setenv("REDIS_PASSWORD", "")
 
 	// 初始化 Redis
@@ -39,7 +39,13 @@ func TestMain(m *testing.M) {
 		os.Exit(1)
 	}
 
-	os.Exit(m.Run())
+	code := m.Run()
+
+	// 测试后清理数据
+	mysql.DB.Exec("DELETE FROM payments")
+	redis.Client.FlushDB(context.Background())
+
+	os.Exit(code)
 }
 
 // validChargeReq 返回一个合法的 ChargeReq 对象，用于成功流程测试

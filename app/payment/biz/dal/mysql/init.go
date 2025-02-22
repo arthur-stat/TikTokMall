@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"gorm.io/driver/mysql"
@@ -17,25 +18,35 @@ var DB *gorm.DB
 func Init() error {
 	var err error
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
-		os.Getenv("MYSQL_USER"),
-		os.Getenv("MYSQL_PASSWORD"),
-		os.Getenv("MYSQL_HOST"),
-		os.Getenv("MYSQL_PORT"),
-		os.Getenv("MYSQL_DATABASE"),
+		getEnvWithFallback("MYSQL_USER", "gorm"),
+		getEnvWithFallback("MYSQL_PASSWORD", "gorm"),
+		getEnvWithFallback("MYSQL_HOST", "127.0.0.1"),
+		getEnvWithFallback("MYSQL_PORT", "3307"),
+		getEnvWithFallback("MYSQL_DATABASE", "gorm"),
 	)
-
+	log.Printf("Connecting to MySQL with DSN: %s", dsn)
 	DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Error),
+		Logger:                 logger.Default.LogMode(logger.Error),
+		PrepareStmt:            true,
+		SkipDefaultTransaction: true,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to connect to MySQL: %v", err)
+		panic(err)
 	}
-
-	// 自动迁移数据库结构
-	err = DB.AutoMigrate(&model.Payments{})
-	if err != nil {
-		return fmt.Errorf("failed to migrate schema: %v", err)
+	if os.Getenv("GO_ENV") != "online" {
+		err := DB.AutoMigrate(
+			&model.Payments{},
+		)
+		if err != nil {
+			return err
+		}
 	}
-
 	return nil
+}
+
+func getEnvWithFallback(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
 }
