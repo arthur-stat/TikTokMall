@@ -7,3 +7,8 @@ type UserService struct{}
 func NewUserService() *UserService {
 	return &UserService{}
 }
+
+// getUserIDByToken 根据token寻找用户id（redis -> mysql）
+func getUserIDByToken(token string) string {
+
+}
