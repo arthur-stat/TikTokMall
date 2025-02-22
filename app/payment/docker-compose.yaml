@@ -16,7 +16,7 @@ services:
   consul:
     image: 'consul:1.15.4'
     ports:
-      - "8501:8500"
+      - "8500:8500"
     command: "consul agent -dev -client=0.0.0.0"
     environment:
       - CONSUL_BIND_INTERFACE=eth0
