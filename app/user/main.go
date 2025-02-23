@@ -20,22 +20,22 @@ import (
 )
 
 func main() {
-	// 1. Initialize configuration
+	// 1. 初始化配置
 	if err := conf.Init(); err != nil {
 		hlog.Fatalf("initialize configuration failed: %v", err)
 	}
 
-	// 2. Initialize tracing
+	// 2. 初始化 tracer：Jaeger 追踪
 	tracer, closer, err := tracer.InitJaeger()
 	if err != nil {
 		hlog.Fatalf("initialize Jaeger failed: %v", err)
 	}
 	defer closer.Close()
-	_ = tracer // temporarily not using tracer
+	_ = tracer // 暂时不使用 tracer
 
-	// Comment out this code
+	// Comment out
 	/*
-		// 3. Initialize Prometheus
+		// 3. 初始化Prometheus
 		go func() {
 			http.Handle("/metrics", promhttp.Handler())
 			if err := http.ListenAndServe(fmt.Sprintf(":%d", config.Prometheus.Port), nil); err != nil {
@@ -44,18 +44,18 @@ func main() {
 		}()
 	*/
 
-	// Initialize database connections
+	// 初始化数据库连接，具体实现见后文
 	if err := initDeps(); err != nil {
 		hlog.Fatalf("init dependencies failed: %v", err)
 	}
 
-	// Create Consul registry
+	// 创建 Consul 注册器
 	r, err := hertz.NewConsulRegister("localhost:8500")
 	if err != nil {
 		hlog.Fatalf("create consul register failed: %v", err)
 	}
 
-	// Create server
+	// 创建服务器（server）
 	h := server.Default(
 		server.WithHostPorts(":8001"),
 		server.WithRegistry(r, &registry.Info{
@@ -69,7 +69,7 @@ func main() {
 		}),
 	)
 
-	// Add CORS middleware
+	// 添加CORS中间件
 	h.Use(cors.New(cors.Config{
 		AllowOrigins: []string{"*"},
 		AllowMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -77,29 +77,30 @@ func main() {
 		MaxAge:       3600,
 	}))
 
-	// Add recovery middleware
+	// 添加恢复中间件
 	h.Use(recovery.Recovery())
 
-	// Create handler
+	// 创建处理器（handler）
 	userHandler := handler.NewUserHandler()
 
-	// Register routes
+	// Register routes 注册路由
 	v1 := h.Group("/v1/user")
 	{
-		v1.POST("/register", userHandler.Register)
-		v1.POST("/login", userHandler.Login)
-		v1.POST("/refresh", userHandler.RefreshToken)
-		v1.POST("/logout", userHandler.Logout)
-		v1.POST("/validate", userHandler.ValidateToken)
+		v1.POST("/register", userHandler.Register) // 注册账户，同auth服务
+		v1.POST("/login", userHandler.Login)       // 账户登录，同auth服务
+		v1.POST("/logout", userHandler.Logout)     // 账户登出，同auth服务
+		v1.POST("/delete", userHandler.Delete)     // 删除账户
+		v1.POST("/update", userHandler.Update)     // 更新账户
+		v1.POST("/info", userHandler.Info)         // 获取账户身份信息
 	}
 
-	// Start server
+	// 启动服务器
 	if err := h.Run(); err != nil {
 		hlog.Fatalf("start server failed: %v", err)
 	}
 }
 
-// initDeps initializes dependencies
+// initDeps 初始化依赖：初始化数据库
 func initDeps() error {
 	// Initialize MySQL
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
@@ -125,7 +126,7 @@ func initDeps() error {
 	return nil
 }
 
-// getEnvOrDefault gets environment variable, returns default value if not exist
+// getEnvOrDefault 获取环境变量，如果不存在则返回默认值
 func getEnvOrDefault(key, defaultValue string) string {
 	if value := os.Getenv(key); value != "" {
 		return value

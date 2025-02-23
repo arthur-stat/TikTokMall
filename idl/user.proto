@@ -1,35 +1,134 @@
-syntax="proto3";
+syntax = "proto3";
 
 package user;
 
 import "api.proto";
 
-option go_package="/user";
+option go_package = "user";
+
+// 定义BaseResp，嵌套使用
+message BaseResp {
+    int32 code = 1;
+    string message = 2;
+}
 
 service UserService {
     rpc Register(RegisterReq) returns (RegisterResp) {
-        option (api.post) = "/user/register";
+        option (api.post) = "/v1/user/register";
     }
     rpc Login(LoginReq) returns (LoginResp) {
-        option (api.post) = "/user/login";
+        option (api.post) = "/v1/user/login";
+    }
+    rpc Logout(LogoutReq) returns (LogoutResp) {
+        option (api.post) = "/v1/user/logout";
+    }
+    rpc Delete(DeleteReq) returns (DeleteResp) {
+        option (api.post) = "/v1/user/delete";
+    }
+    rpc Update(UpdateReq) returns (UpdateResp) {
+        option (api.post) = "/v1/user/update";
+    }
+    rpc Info(InfoReq) returns (InfoResp) {
+        option (api.post) = "/v1/user/info";
     }
 }
 
 message RegisterReq {
-    string email = 1 [(api.body) = "email"];
-    string password = 2 [(api.body) = "password"];
-    string confirm_password = 3 [(api.body) = "confirm_password"];
+    string username = 1 [(api.vd) = "len($) > 3 && len($) < 32"];
+    string password = 2 [(api.vd) = "len($) > 6 && len($) < 32"];
+    string email = 3 [(api.vd) = "email($)"];
+    string phone = 4 [(api.vd) = "regexp('^1[3-9]\\d{9}$')"];
 }
 
 message RegisterResp {
-    int32 user_id = 1;
+    BaseResp base = 1;
+    int64 user_id = 2;
+    string token = 3;
 }
 
 message LoginReq {
-    string email = 1 [(api.body) = "email"];
-    string password = 2 [(api.body) = "password"];
+    string username = 1 [(api.vd) = "len($) > 0"];
+    string password = 2 [(api.vd) = "len($) > 0"];
 }
 
 message LoginResp {
-    int32 user_id = 1;
+    BaseResp base = 1;
+    string token = 2;
+    string refresh_token = 3;
 }
+
+message LogoutReq {
+    string token = 1 [(api.header) = "Authorization"];
+}
+
+message LogoutResp {
+    BaseResp base = 1;
+}
+
+message DeleteReq {
+    string token = 1 [(api.header) = "Authorization"];
+}
+
+message DeleteResp {
+    BaseResp base = 1;
+}
+
+message UpdateReq {
+    string token = 1 [(api.header) = "Authorization"];
+    string new_username = 2;
+    string new_email = 3;
+    string new_phone = 4;
+}
+
+message UpdateResp {
+    BaseResp base = 1;
+}
+
+message InfoReq {
+    string token = 1 [(api.header) = "Authorization"];
+}
+
+message InfoResp {
+    BaseResp base = 1;
+    int64 user_id = 2;
+    string username = 3;
+    string email = 4;
+    string phone = 5;
+}
+
+// // 旧proto代码
+//syntax="proto3";
+//
+//package user;
+//
+//import "api.proto";
+//
+//option go_package="/user";
+//
+//service UserService {
+//    rpc Register(RegisterReq) returns (RegisterResp) {
+//        option (api.post) = "/user/register";
+//    }
+//    rpc Login(LoginReq) returns (LoginResp) {
+//        option (api.post) = "/user/login";
+//    }
+//}
+//
+//message RegisterReq {
+//    string email = 1 [(api.body) = "email"];
+//    string password = 2 [(api.body) = "password"];
+//    string confirm_password = 3 [(api.body) = "confirm_password"];
+//}
+//
+//message RegisterResp {
+//    int32 user_id = 1;
+//}
+//
+//message LoginReq {
+//    string email = 1 [(api.body) = "email"];
+//    string password = 2 [(api.body) = "password"];
+//}
+//
+//message LoginResp {
+//    int32 user_id = 1;
+//}

@@ -5,18 +5,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="916fdc05-e619-4350-86c0-0294aeb3596f" name="更改" comment="完成payment服务的简单健康检查">
-      <change afterPath="$PROJECT_DIR$/app/user/pkg/hertz/registry.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/user/pkg/tracer/init.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/auth/biz/dal/mysql/user.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/biz/dal/mysql/user.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/user/biz/dal/mysql/init.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/user/biz/dal/mysql/init.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/user/biz/dal/redis/init.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/user/biz/dal/redis/init.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/user/biz/service/user.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/user/biz/service/user.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/user/conf/conf.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/user/conf/conf.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/user/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/app/user/go.mod" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/user/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/app/user/go.sum" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/user/biz/handler/user.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/user/biz/handler/user.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/user/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/user/main.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/idl/user.proto" beforeDir="false" afterPath="$PROJECT_DIR$/idl/user.proto" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kitex_gen/api/api.pb.fast.go" beforeDir="false" afterPath="$PROJECT_DIR$/kitex_gen/api/api.pb.fast.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/kitex_gen/api/api.pb.go" beforeDir="false" afterPath="$PROJECT_DIR$/kitex_gen/api/api.pb.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

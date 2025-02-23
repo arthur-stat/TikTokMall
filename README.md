@@ -287,23 +287,23 @@ service/                   # 服务根目录
    - 用户认证与授权
    - Token 管理
    - 端口: 8000
-
-2. **购物车服务 (Cart Service)**
+2. **用户服务（User Service）**
+   - 与认证服务共同组成用户模块
+   - 用户数据管理
+   - 端口: 8001
+3. **购物车服务 (Cart Service)**
    - 购物车管理
    - 商品缓存
    - 端口: 8002
-
-3. **商品服务 (Product Service)**
+4. **商品服务 (Product Service)**
    - 商品管理
    - 库存控制
    - 端口: 8003
-
-4. **订单服务 (Order Service)**
+5. **订单服务 (Order Service)**
    - 订单处理
    - 支付集成
    - 端口: 8004
-
-5. **支付服务 (Payment Service)**
+6. **支付服务 (Payment Service)**
    - 支付处理
    - 退款管理
    - 端口: 8005
