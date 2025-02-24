@@ -50,7 +50,7 @@ func GetUserByID(userID int64) (*User, error) {
 	return &user, err
 }
 
-// CheckUserExists 检查用户名唯一性
+// CheckUserExists 检查用户名是否存在
 func CheckUserExists(username string) (bool, error) {
 	var count int64
 	err := DB.Model(&User{}).Where("username = ?", username).Count(&count).Error

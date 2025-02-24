@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"strconv"
 	"strings"
 
 	"github.com/cloudwego/hertz/pkg/app"
@@ -142,7 +143,7 @@ func (h *UserHandler) Delete(ctx context.Context, c *app.RequestContext) {
 	}
 
 	// 从Authorization头中获取token
-	token := strings.TrimPrefix(req.Token, "Bearer ")
+	token, _ := strconv.ParseInt(strings.TrimPrefix(req.Token, "Bearer "), 10, 64)
 
 	// 调用服务层处理删除
 	if err := h.svc.Delete(ctx, token); err != nil {
