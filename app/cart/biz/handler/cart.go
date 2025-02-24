@@ -1,49 +1,35 @@
 package handler
 
 import (
-    "context"
+	"context"
 
-    "TikTokMall/app/cart/biz/service"
-    "TikTokMall/app/cart/kitex_gen/cart"
+	"TikTokMall/app/cart/biz/service"
+	"TikTokMall/app/cart/kitex_gen/cart"
 )
 
-// CartServiceImpl implements the cart service interface
+// CartServiceImpl implements the last service interface defined in the IDL.
 type CartServiceImpl struct {
-    svc *service.CartService
+	svc service.CartService
 }
 
-// NewCartServiceImpl creates a new cart service implementation
+// NewCartServiceImpl creates a new CartServiceImpl.
 func NewCartServiceImpl() *CartServiceImpl {
-    return &CartServiceImpl{
-        svc: service.NewCartService(),
-    }
+	return &CartServiceImpl{
+		svc: service.NewCartService(),
+	}
 }
 
-// AddItem adds an item to the cart
-func (s *CartServiceImpl) AddItem(ctx context.Context, req *cart.AddItemReq) (*cart.AddItemResp, error) {
-    err := s.svc.AddItem(ctx, req)
-    if err != nil {
-        return &cart.AddItemResp{}, err
-    }
-    return &cart.AddItemResp{}, nil
+// AddItem implements the CartServiceImpl interface.
+func (s *CartServiceImpl) AddItem(ctx context.Context, req *cart.AddItemReq) (resp *cart.AddItemResp, err error) {
+	return s.svc.AddItem(ctx, req)
 }
 
-// GetCart retrieves all items in the cart
-func (s *CartServiceImpl) GetCart(ctx context.Context, req *cart.GetCartReq) (*cart.GetCartResp, error) {
-    result, err := s.svc.GetCart(ctx, req.UserId)
-    if err != nil {
-        return &cart.GetCartResp{}, err
-    }
-    return &cart.GetCartResp{
-        Cart: result,
-    }, nil
+// GetCart implements the CartServiceImpl interface.
+func (s *CartServiceImpl) GetCart(ctx context.Context, req *cart.GetCartReq) (resp *cart.GetCartResp, err error) {
+	return s.svc.GetCart(ctx, req)
 }
 
-// EmptyCart removes all items from the cart
-func (s *CartServiceImpl) EmptyCart(ctx context.Context, req *cart.EmptyCartReq) (*cart.EmptyCartResp, error) {
-    err := s.svc.EmptyCart(ctx, req.UserId)
-    if err != nil {
-        return &cart.EmptyCartResp{}, err
-    }
-    return &cart.EmptyCartResp{}, nil
+// EmptyCart implements the CartServiceImpl interface.
+func (s *CartServiceImpl) EmptyCart(ctx context.Context, req *cart.EmptyCartReq) (resp *cart.EmptyCartResp, err error) {
+	return s.svc.EmptyCart(ctx, req)
 }

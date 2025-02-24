@@ -1,21 +1,21 @@
 package model
 
 import (
-    "time"
+	"time"
 )
 
-// CartItem represents a single item in a user's shopping cart
+// CartItem 购物车项
 type CartItem struct {
-    ID        uint32    `json:"id" gorm:"primaryKey;autoIncrement"`
-    UserID    uint32    `json:"user_id" gorm:"not null;index:idx_user_id"`
-    ProductID uint32    `json:"product_id" gorm:"not null"`
-    Quantity  uint32    `json:"quantity" gorm:"not null;default:1"`
-    Selected  bool      `json:"selected" gorm:"not null;default:true"`
-    CreatedAt time.Time `json:"created_at" gorm:"not null;autoCreateTime"`
-    UpdatedAt time.Time `json:"updated_at" gorm:"not null;autoUpdateTime"`
+	ID        int64     `gorm:"primaryKey;autoIncrement"`
+	UserID    uint32    `gorm:"not null;index"`
+	ProductID uint32    `gorm:"not null"`
+	Quantity  uint32    `gorm:"not null;default:1"`
+	Selected  bool      `gorm:"not null;default:true"`
+	CreatedAt time.Time `gorm:"not null;default:CURRENT_TIMESTAMP"`
+	UpdatedAt time.Time `gorm:"not null;default:CURRENT_TIMESTAMP;ON UPDATE CURRENT_TIMESTAMP"`
 }
 
-// TableName specifies the table name for CartItem
+// TableName 指定表名
 func (CartItem) TableName() string {
-    return "cart_items"
-} 
+	return "cart_items"
+}

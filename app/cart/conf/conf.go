@@ -66,18 +66,27 @@ type LogConfig struct {
 }
 
 type JaegerConfig struct {
-	AgentHost string `mapstructure:"agent_host"`
-	AgentPort int    `mapstructure:"agent_port"`
+	Host         string  `mapstructure:"host"`
+	Port         int     `mapstructure:"port"`
+	SamplerType  string  `mapstructure:"sampler_type"`
+	SamplerParam float64 `mapstructure:"sampler_param"`
+	LogSpans     bool    `mapstructure:"log_spans"`
 }
 
 type PrometheusConfig struct {
 	Port int `mapstructure:"port"`
 }
 
-// GetConf gets configuration instance
-func GetConf() *Config {
+// GetConfig 获取配置实例
+func GetConfig() *Config {
 	once.Do(initConf)
 	return conf
+}
+
+// Init 初始化配置
+func Init() error {
+	once.Do(initConf)
+	return nil
 }
 
 func initConf() {
@@ -111,7 +120,7 @@ func GetEnv() string {
 }
 
 func LogLevel() klog.Level {
-	level := GetConf().Service.LogLevel
+	level := GetConfig().Service.LogLevel
 	switch level {
 	case "trace":
 		return klog.LevelTrace

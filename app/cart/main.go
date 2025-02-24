@@ -70,16 +70,14 @@ func main() {
 	h.Use(recovery.Recovery())
 
 	// 创建处理器
-	cartHandler := handler.NewCartHandler()
+	cartHandler := handler.NewCartHTTPHandler()
 
 	// 注册路由
 	v1 := h.Group("/v1/cart")
 	{
 		v1.POST("/add", cartHandler.AddItem)
-		v1.POST("/update", cartHandler.UpdateItem)
-		v1.POST("/delete", cartHandler.DeleteItem)
-		v1.GET("/list", cartHandler.GetCart)
-		v1.POST("/clear", cartHandler.ClearCart)
+		v1.GET("/get", cartHandler.GetCart)
+		v1.POST("/empty", cartHandler.EmptyCart)
 	}
 
 	// 注释掉 Prometheus 相关代码
@@ -102,23 +100,12 @@ func main() {
 // initDeps 初始化依赖
 func initDeps() error {
 	// 初始化MySQL
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
-		getEnvOrDefault("MYSQL_USER", "tiktok"),
-		getEnvOrDefault("MYSQL_PASSWORD", "tiktok123"),
-		getEnvOrDefault("MYSQL_HOST", "localhost"),
-		getEnvOrDefault("MYSQL_PORT", "3307"),
-		getEnvOrDefault("MYSQL_DATABASE", "tiktok_mall"),
-	)
-	if err := mysql.Init(dsn); err != nil {
+	if err := mysql.Init(); err != nil {
 		return fmt.Errorf("init mysql failed: %v", err)
 	}
 
 	// 初始化Redis
-	if err := redis.Init(
-		getEnvOrDefault("REDIS_ADDR", "localhost:6380"),
-		getEnvOrDefault("REDIS_PASSWORD", ""),
-		0,
-	); err != nil {
+	if err := redis.Init(); err != nil {
 		return fmt.Errorf("init redis failed: %v", err)
 	}
 
