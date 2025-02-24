@@ -24,7 +24,7 @@ type Order struct {
 	UserInfo        sql.NullString `gorm:"type:json" json:"user_info"`
 	TotalAmount     float64        `gorm:"type:decimal(10,2);not null" json:"total_amount"`
 	Status          int8           `gorm:"type:tinyint;not null;default:1" json:"status"`
-	PaymentMethod   sql.NullInt8   `gorm:"type:tinyint" json:"payment_method"`
+	PaymentMethod   sql.NullInt32  `gorm:"type:tinyint" json:"payment_method"`
 	PaymentTime     sql.NullTime   `json:"payment_time"`
 	TransactionID   sql.NullString `gorm:"type:varchar(64)" json:"transaction_id"`
 	ShippingAddress sql.NullString `gorm:"type:json" json:"shipping_address"`
@@ -43,14 +43,6 @@ type OrderItem struct {
 	Price        float64   `gorm:"type:decimal(10,2);not null" json:"price"`
 	CreatedAt    time.Time `gorm:"not null;default:CURRENT_TIMESTAMP" json:"created_at"`
 }
-
-// 订单状态常量
-const (
-	OrderStatusPending  int8 = 1 // 待支付
-	OrderStatusPaid     int8 = 2 // 已支付
-	OrderStatusCanceled int8 = 3 // 已取消
-	OrderStatusComplete int8 = 4 // 已完成
-)
 
 // TableName 指定Cart模型的表名
 func (Cart) TableName() string {
