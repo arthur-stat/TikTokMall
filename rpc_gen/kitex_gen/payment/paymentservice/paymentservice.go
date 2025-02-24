@@ -29,6 +29,13 @@ var serviceMethods = map[string]kitex.MethodInfo{
 		false,
 		kitex.WithStreamingMode(kitex.StreamingUnary),
 	),
+	"AlipayCharge": kitex.NewMethodInfo(
+		alipayChargeHandler,
+		newAlipayChargeArgs,
+		newAlipayChargeResult,
+		false,
+		kitex.WithStreamingMode(kitex.StreamingUnary),
+	),
 }
 
 var (
@@ -401,6 +408,159 @@ func (p *RefundResult) GetResult() interface{} {
 	return p.Success
 }
 
+func alipayChargeHandler(ctx context.Context, handler interface{}, arg, result interface{}) error {
+	switch s := arg.(type) {
+	case *streaming.Args:
+		st := s.Stream
+		req := new(payment.AlipayChargeReq)
+		if err := st.RecvMsg(req); err != nil {
+			return err
+		}
+		resp, err := handler.(payment.PaymentService).AlipayCharge(ctx, req)
+		if err != nil {
+			return err
+		}
+		return st.SendMsg(resp)
+	case *AlipayChargeArgs:
+		success, err := handler.(payment.PaymentService).AlipayCharge(ctx, s.Req)
+		if err != nil {
+			return err
+		}
+		realResult := result.(*AlipayChargeResult)
+		realResult.Success = success
+		return nil
+	default:
+		return errInvalidMessageType
+	}
+}
+func newAlipayChargeArgs() interface{} {
+	return &AlipayChargeArgs{}
+}
+
+func newAlipayChargeResult() interface{} {
+	return &AlipayChargeResult{}
+}
+
+type AlipayChargeArgs struct {
+	Req *payment.AlipayChargeReq
+}
+
+func (p *AlipayChargeArgs) FastRead(buf []byte, _type int8, number int32) (n int, err error) {
+	if !p.IsSetReq() {
+		p.Req = new(payment.AlipayChargeReq)
+	}
+	return p.Req.FastRead(buf, _type, number)
+}
+
+func (p *AlipayChargeArgs) FastWrite(buf []byte) (n int) {
+	if !p.IsSetReq() {
+		return 0
+	}
+	return p.Req.FastWrite(buf)
+}
+
+func (p *AlipayChargeArgs) Size() (n int) {
+	if !p.IsSetReq() {
+		return 0
+	}
+	return p.Req.Size()
+}
+
+func (p *AlipayChargeArgs) Marshal(out []byte) ([]byte, error) {
+	if !p.IsSetReq() {
+		return out, nil
+	}
+	return proto.Marshal(p.Req)
+}
+
+func (p *AlipayChargeArgs) Unmarshal(in []byte) error {
+	msg := new(payment.AlipayChargeReq)
+	if err := proto.Unmarshal(in, msg); err != nil {
+		return err
+	}
+	p.Req = msg
+	return nil
+}
+
+var AlipayChargeArgs_Req_DEFAULT *payment.AlipayChargeReq
+
+func (p *AlipayChargeArgs) GetReq() *payment.AlipayChargeReq {
+	if !p.IsSetReq() {
+		return AlipayChargeArgs_Req_DEFAULT
+	}
+	return p.Req
+}
+
+func (p *AlipayChargeArgs) IsSetReq() bool {
+	return p.Req != nil
+}
+
+func (p *AlipayChargeArgs) GetFirstArgument() interface{} {
+	return p.Req
+}
+
+type AlipayChargeResult struct {
+	Success *payment.AlipayChargeResp
+}
+
+var AlipayChargeResult_Success_DEFAULT *payment.AlipayChargeResp
+
+func (p *AlipayChargeResult) FastRead(buf []byte, _type int8, number int32) (n int, err error) {
+	if !p.IsSetSuccess() {
+		p.Success = new(payment.AlipayChargeResp)
+	}
+	return p.Success.FastRead(buf, _type, number)
+}
+
+func (p *AlipayChargeResult) FastWrite(buf []byte) (n int) {
+	if !p.IsSetSuccess() {
+		return 0
+	}
+	return p.Success.FastWrite(buf)
+}
+
+func (p *AlipayChargeResult) Size() (n int) {
+	if !p.IsSetSuccess() {
+		return 0
+	}
+	return p.Success.Size()
+}
+
+func (p *AlipayChargeResult) Marshal(out []byte) ([]byte, error) {
+	if !p.IsSetSuccess() {
+		return out, nil
+	}
+	return proto.Marshal(p.Success)
+}
+
+func (p *AlipayChargeResult) Unmarshal(in []byte) error {
+	msg := new(payment.AlipayChargeResp)
+	if err := proto.Unmarshal(in, msg); err != nil {
+		return err
+	}
+	p.Success = msg
+	return nil
+}
+
+func (p *AlipayChargeResult) GetSuccess() *payment.AlipayChargeResp {
+	if !p.IsSetSuccess() {
+		return AlipayChargeResult_Success_DEFAULT
+	}
+	return p.Success
+}
+
+func (p *AlipayChargeResult) SetSuccess(x interface{}) {
+	p.Success = x.(*payment.AlipayChargeResp)
+}
+
+func (p *AlipayChargeResult) IsSetSuccess() bool {
+	return p.Success != nil
+}
+
+func (p *AlipayChargeResult) GetResult() interface{} {
+	return p.Success
+}
+
 type kClient struct {
 	c client.Client
 }
@@ -426,6 +586,16 @@ func (p *kClient) Refund(ctx context.Context, Req *payment.RefundReq) (r *paymen
 	_args.Req = Req
 	var _result RefundResult
 	if err = p.c.Call(ctx, "Refund", &_args, &_result); err != nil {
+		return
+	}
+	return _result.GetSuccess(), nil
+}
+
+func (p *kClient) AlipayCharge(ctx context.Context, Req *payment.AlipayChargeReq) (r *payment.AlipayChargeResp, err error) {
+	var _args AlipayChargeArgs
+	_args.Req = Req
+	var _result AlipayChargeResult
+	if err = p.c.Call(ctx, "AlipayCharge", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil

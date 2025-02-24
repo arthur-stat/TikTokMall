@@ -51,3 +51,18 @@ func StatusToRefundStatus(db *gorm.DB, ctx context.Context, transactionID string
 	err = db.WithContext(ctx).Where("transaction_id = ?", transactionID).Updates(&payment).Error
 	return err
 }
+
+func StatusToChargeStatus(db *gorm.DB, ctx context.Context, transactionID string) error {
+	var payment model.Payments
+	err := db.WithContext(ctx).Where("transaction_id = ?", transactionID).First(&payment).Error
+	if err != nil {
+		return err
+	}
+	if payment.Status != 0 {
+		return fmt.Errorf("payment status is not 0")
+	}
+	payment.Status = 1
+	payment.UpdatedAt = time.Now()
+	err = db.WithContext(ctx).Where("transaction_id = ?", transactionID).Updates(&payment).Error
+	return err
+}

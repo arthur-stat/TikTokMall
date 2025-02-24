@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -27,6 +28,12 @@ func TestMain(m *testing.M) {
 	os.Setenv("REDIS_HOST", "localhost")
 	os.Setenv("REDIS_PORT", "6380")
 	os.Setenv("REDIS_PASSWORD", "")
+
+	// 设置环境变量为 test
+	_ = os.Setenv("GO_ENV", "test")
+	// 初始化配置文件路径
+	confPath := filepath.Join("conf", "test", "conf.yaml")
+	_ = os.Setenv("CONF_PATH", confPath)
 
 	// 初始化 Redis
 	if err := redis.Init(); err != nil {

@@ -5,6 +5,7 @@ import (
 	"TikTokMall/app/payment/conf"
 	"TikTokMall/app/payment/handler"
 	"TikTokMall/app/payment/kitex_gen/payment/paymentservice"
+	"context"
 	hserver "github.com/cloudwego/hertz/pkg/app/server"
 	"github.com/cloudwego/hertz/pkg/common/hlog"
 	"github.com/cloudwego/kitex/pkg/klog"
@@ -72,21 +73,21 @@ func startHTTPServer() error {
 		v1.GET("/health", handler.HealthHandler)
 		v1.POST("/charge", handler.ChargeHandler)
 		v1.POST("/refund", handler.RefundHandler)
+		v1.POST("/alipay/charge", handler.AlipayChargeHandler)
 	}
 
-	// 启动Consul客户端并注册服务
-	err := registerServiceToConsul("payment", "localhost", 8005, "http")
-	if err != nil {
-		hlog.Error("Failed to register service to Consul: %v", err)
-		return err
-	}
+	// 添加 OnRun 钩子，在服务启动后注册 Consul
+	h.OnRun = append(h.OnRun, func(ctx context.Context) error {
+		err := registerServiceToConsul("payment", "localhost", 8005, "http")
+		if err != nil {
+			hlog.Error("Failed to register service to Consul: %v", err)
+			return err
+		}
+		hlog.Info("Service registered to Consul after server started")
+		return nil
+	})
 
-	err = h.Run()
-	if err != nil {
-		hlog.Error("Failed to start HTTP server: %v", err)
-		return err
-	}
-	return nil
+	return h.Run()
 }
 
 func kitexInit() (opts []kserver.Option) {

@@ -3,7 +3,6 @@ package conf
 import (
 	"io/ioutil"
 	"os"
-	"path/filepath"
 	"sync"
 
 	"github.com/cloudwego/kitex/pkg/klog"
@@ -23,6 +22,7 @@ type Config struct {
 	MySQL    MySQL    `yaml:"mysql"`
 	Redis    Redis    `yaml:"redis"`
 	Registry Registry `yaml:"registry"`
+	Alipay   Alipay   `yaml:"alipay"`
 }
 
 type MySQL struct {
@@ -52,6 +52,13 @@ type Registry struct {
 	Password        string   `yaml:"password"`
 }
 
+type Alipay struct {
+	AppID        string `yaml:"app_id"`
+	PrivateKey   string `yaml:"private_key"`
+	AliPublicKey string `yaml:"ali_public_key"`
+	NotifyUrl    string `yaml:"notify_url"`
+}
+
 // GetConf gets configuration instance
 func GetConf() *Config {
 	once.Do(initConf)
@@ -59,8 +66,9 @@ func GetConf() *Config {
 }
 
 func initConf() {
-	prefix := "conf"
-	confFileRelPath := filepath.Join(prefix, filepath.Join(GetEnv(), "conf.yaml"))
+	//prefix := "conf"
+	//confFileRelPath := filepath.Join(prefix, filepath.Join(GetEnv(), "conf.yaml"))
+	confFileRelPath := "D:/Code/GoCode/TikTokMall/app/payment/conf/test/conf.yaml"
 	content, err := ioutil.ReadFile(confFileRelPath)
 	if err != nil {
 		panic(err)

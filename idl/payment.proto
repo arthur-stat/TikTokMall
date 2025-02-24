@@ -13,7 +13,9 @@ service PaymentService {
   rpc Refund(RefundReq) returns (RefundResp) {
     option (api.post) = "/payment/refund";
   }
-
+  rpc AlipayCharge(AlipayChargeReq) returns (AlipayChargeResp) {
+    option (api.post) = "/payment/alipay_charge";
+  }
 }
 
 message CreditCardInfo {
@@ -51,3 +53,13 @@ message RefundResp {
   string refund_id = 1; // 退款单号
 }
 
+message AlipayChargeReq {
+  int64 order_id = 1 [(api.body) = "order_id"];
+  int64 user_id = 2 [(api.body) = "user_id"];
+  float amount = 3 [(api.body) = "amount"];
+  string return_url = 4 [(api.body) = "return_url"];
+}
+
+message AlipayChargeResp {
+  string pay_url = 1;
+}

@@ -65,6 +65,7 @@ func (s *ChargeService) Run(req *payment.ChargeReq) (resp *payment.ChargeResp, e
 		Amount:        req.Amount,
 		PaymentMethod: req.PaymentMethod,
 		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
 	}
 
 	// 插入支付记录到数据库

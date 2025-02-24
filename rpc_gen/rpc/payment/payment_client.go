@@ -14,6 +14,7 @@ type RPCClient interface {
 	Service() string
 	Charge(ctx context.Context, Req *payment.ChargeReq, callOptions ...callopt.Option) (r *payment.ChargeResp, err error)
 	Refund(ctx context.Context, Req *payment.RefundReq, callOptions ...callopt.Option) (r *payment.RefundResp, err error)
+	AlipayCharge(ctx context.Context, Req *payment.AlipayChargeReq, callOptions ...callopt.Option) (r *payment.AlipayChargeResp, err error)
 }
 
 func NewRPCClient(dstService string, opts ...client.Option) (RPCClient, error) {
@@ -48,4 +49,8 @@ func (c *clientImpl) Charge(ctx context.Context, Req *payment.ChargeReq, callOpt
 
 func (c *clientImpl) Refund(ctx context.Context, Req *payment.RefundReq, callOptions ...callopt.Option) (r *payment.RefundResp, err error) {
 	return c.kitexClient.Refund(ctx, Req, callOptions...)
+}
+
+func (c *clientImpl) AlipayCharge(ctx context.Context, Req *payment.AlipayChargeReq, callOptions ...callopt.Option) (r *payment.AlipayChargeResp, err error) {
+	return c.kitexClient.AlipayCharge(ctx, Req, callOptions...)
 }

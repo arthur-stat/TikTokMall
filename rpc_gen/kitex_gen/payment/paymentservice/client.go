@@ -13,6 +13,7 @@ import (
 type Client interface {
 	Charge(ctx context.Context, Req *payment.ChargeReq, callOptions ...callopt.Option) (r *payment.ChargeResp, err error)
 	Refund(ctx context.Context, Req *payment.RefundReq, callOptions ...callopt.Option) (r *payment.RefundResp, err error)
+	AlipayCharge(ctx context.Context, Req *payment.AlipayChargeReq, callOptions ...callopt.Option) (r *payment.AlipayChargeResp, err error)
 }
 
 // NewClient creates a client for the service defined in IDL.
@@ -52,4 +53,9 @@ func (p *kPaymentServiceClient) Charge(ctx context.Context, Req *payment.ChargeR
 func (p *kPaymentServiceClient) Refund(ctx context.Context, Req *payment.RefundReq, callOptions ...callopt.Option) (r *payment.RefundResp, err error) {
 	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
 	return p.kClient.Refund(ctx, Req)
+}
+
+func (p *kPaymentServiceClient) AlipayCharge(ctx context.Context, Req *payment.AlipayChargeReq, callOptions ...callopt.Option) (r *payment.AlipayChargeResp, err error) {
+	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
+	return p.kClient.AlipayCharge(ctx, Req)
 }
