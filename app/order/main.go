@@ -1,59 +1,108 @@
 package main
 
 import (
-	"net"
-	"time"
+	"fmt"
+	"os"
 
-	"github.com/cloudwego/kitex/pkg/klog"
-	"github.com/cloudwego/kitex/pkg/rpcinfo"
-	"github.com/cloudwego/kitex/server"
-	kitexlogrus "github.com/kitex-contrib/obs-opentelemetry/logging/logrus"
+	"github.com/cloudwego/hertz/pkg/app/middlewares/server/recovery"
+	"github.com/cloudwego/hertz/pkg/app/server"
+	"github.com/cloudwego/hertz/pkg/app/server/registry"
+	"github.com/cloudwego/hertz/pkg/common/hlog"
+	"github.com/hertz-contrib/cors"
+
+	"TikTokMall/app/order/biz/dal/mysql"
+	"TikTokMall/app/order/biz/dal/redis"
+	"TikTokMall/app/order/biz/handler"
+	"TikTokMall/app/order/biz/utils"
 	"TikTokMall/app/order/conf"
-	"TikTokMall/app/order/kitex_gen/order/orderservice"
-	"go.uber.org/zap/zapcore"
-	"gopkg.in/natefinch/lumberjack.v2"
+	"TikTokMall/app/order/pkg/hertz"
+	"TikTokMall/app/order/pkg/tracer"
 )
 
 func main() {
-	opts := kitexInit()
+	// 1. 初始化配置
+	conf.Init()
 
-	svr := orderservice.NewServer(new(OrderServiceImpl), opts...)
-
-	err := svr.Run()
+	// 2. 初始化追踪
+	tracer, closer, err := tracer.InitJaeger()
 	if err != nil {
-		klog.Error(err.Error())
+		hlog.Fatalf("初始化Jaeger失败: %v", err)
+	}
+	defer closer.Close()
+	_ = tracer // 暂时不使用 tracer
+
+	// 初始化数据库连接
+	if err := initDeps(); err != nil {
+		hlog.Fatalf("init dependencies failed: %v", err)
+	}
+
+	// 创建 Consul 注册器
+	r, err := hertz.NewConsulRegister("localhost:8501")
+	if err != nil {
+		hlog.Fatalf("create consul register failed: %v", err)
+	}
+
+	// 创建服务器
+	h := server.Default(
+		server.WithHostPorts(":8000"),
+		server.WithRegistry(r, &registry.Info{
+			ServiceName: "order",
+			Addr:        utils.NewNetAddr("tcp", "localhost:8000"),
+			Weight:      10,
+			Tags: map[string]string{
+				"version": "v1",
+				"service": "order",
+			},
+		}),
+	)
+
+	// 添加CORS中间件
+	h.Use(cors.New(cors.Config{
+		AllowOrigins: []string{"*"},
+		AllowMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders: []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		MaxAge:       3600,
+	}))
+
+	// 添加恢复中间件
+	h.Use(recovery.Recovery())
+
+	// 创建处理器
+	orderHandler := handler.NewOrderHTTPHandler()
+
+	// 注册路由
+	v1 := h.Group("/v1/order")
+	{
+		v1.POST("/create", orderHandler.PlaceOrder)
+		v1.GET("/list", orderHandler.ListOrder)
+		v1.POST("/mark_paid", orderHandler.MarkOrderPaid)
+	}
+
+	// 启动服务器
+	if err := h.Run(); err != nil {
+		hlog.Fatalf("start server failed: %v", err)
 	}
 }
 
-func kitexInit() (opts []server.Option) {
-	// address
-	addr, err := net.ResolveTCPAddr("tcp", conf.GetConf().Kitex.Address)
-	if err != nil {
-		panic(err)
+// initDeps 初始化依赖
+func initDeps() error {
+	// 初始化MySQL
+	if err := mysql.Init(); err != nil {
+		return fmt.Errorf("init mysql failed: %v", err)
 	}
-	opts = append(opts, server.WithServiceAddr(addr))
 
-	// service info
-	opts = append(opts, server.WithServerBasicInfo(&rpcinfo.EndpointBasicInfo{
-		ServiceName: conf.GetConf().Kitex.Service,
-	}))
-
-	// klog
-	logger := kitexlogrus.NewLogger()
-	klog.SetLogger(logger)
-	klog.SetLevel(conf.LogLevel())
-	asyncWriter := &zapcore.BufferedWriteSyncer{
-		WS: zapcore.AddSync(&lumberjack.Logger{
-			Filename:   conf.GetConf().Kitex.LogFileName,
-			MaxSize:    conf.GetConf().Kitex.LogMaxSize,
-			MaxBackups: conf.GetConf().Kitex.LogMaxBackups,
-			MaxAge:     conf.GetConf().Kitex.LogMaxAge,
-		}),
-		FlushInterval: time.Minute,
+	// 初始化Redis
+	if err := redis.Init(); err != nil {
+		return fmt.Errorf("init redis failed: %v", err)
 	}
-	klog.SetOutput(asyncWriter)
-	server.RegisterShutdownHook(func() {
-		asyncWriter.Sync()
-	})
-	return
+
+	return nil
+}
+
+// getEnvOrDefault 获取环境变量，如果不存在则返回默认值
+func getEnvOrDefault(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
 }

@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order
+  namespace: tiktok-mall
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: order
+  template:
+    metadata:
+      labels:
+        app: order
+    spec:
+      containers:
+      - name: order
+        image: tiktok-mall/order:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: GO_ENV
+          value: "prod"
+        volumeMounts:
+        - name: config
+          mountPath: /app/conf
+        - name: logs
+          mountPath: /var/log/order
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: config
+        configMap:
+          name: order-config
+      - name: logs
+        emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: order
+  namespace: tiktok-mall
+spec:
+  selector:
+    app: order
+  ports:
+  - port: 8080
+    targetPort: 8080
+  type: ClusterIP 

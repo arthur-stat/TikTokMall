@@ -1,0 +1,29 @@
+groups:
+  - name: order_alerts
+    rules:
+      - alert: HighOrderLatency
+        expr: histogram_quantile(0.95, sum(rate(order_duration_seconds_bucket[5m])) by (le)) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High order processing latency
+          description: 95th percentile of order processing time is above 1s for 5m
+
+      - alert: HighOrderErrorRate
+        expr: sum(rate(order_total{status="error"}[5m])) / sum(rate(order_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High order error rate
+          description: Order error rate is above 5% for 5m
+
+      - alert: OrderServiceDown
+        expr: up{job="order"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: Order service is down
+          description: Order service has been down for more than 1 minute 
