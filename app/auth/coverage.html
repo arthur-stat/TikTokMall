@@ -87,25 +87,33 @@
 				
 				<option value="file15">TikTokMall/app/auth/biz/service/verify_token_by_rpc.go (100.0%)</option>
 				
-				<option value="file16">TikTokMall/app/auth/conf/conf.go (0.0%)</option>
+				<option value="file16">TikTokMall/app/auth/biz/utils/net.go (0.0%)</option>
 				
-				<option value="file17">TikTokMall/app/auth/handler.go (0.0%)</option>
+				<option value="file17">TikTokMall/app/auth/conf/conf.go (0.0%)</option>
 				
-				<option value="file18">TikTokMall/app/auth/kitex_gen/api/api.pb.go (88.9%)</option>
+				<option value="file18">TikTokMall/app/auth/handler.go (0.0%)</option>
 				
-				<option value="file19">TikTokMall/app/auth/kitex_gen/auth/auth.pb.fast.go (0.0%)</option>
+				<option value="file19">TikTokMall/app/auth/kitex_gen/api/api.pb.go (88.9%)</option>
 				
-				<option value="file20">TikTokMall/app/auth/kitex_gen/auth/auth.pb.go (7.4%)</option>
+				<option value="file20">TikTokMall/app/auth/kitex_gen/auth/auth.pb.fast.go (0.0%)</option>
 				
-				<option value="file21">TikTokMall/app/auth/kitex_gen/auth/authservice/authservice.go (0.0%)</option>
+				<option value="file21">TikTokMall/app/auth/kitex_gen/auth/auth.pb.go (7.4%)</option>
 				
-				<option value="file22">TikTokMall/app/auth/kitex_gen/auth/authservice/client.go (0.0%)</option>
+				<option value="file22">TikTokMall/app/auth/kitex_gen/auth/authservice/authservice.go (0.0%)</option>
 				
-				<option value="file23">TikTokMall/app/auth/kitex_gen/auth/authservice/invoker.go (0.0%)</option>
+				<option value="file23">TikTokMall/app/auth/kitex_gen/auth/authservice/client.go (0.0%)</option>
 				
-				<option value="file24">TikTokMall/app/auth/kitex_gen/auth/authservice/server.go (0.0%)</option>
+				<option value="file24">TikTokMall/app/auth/kitex_gen/auth/authservice/invoker.go (0.0%)</option>
 				
-				<option value="file25">TikTokMall/app/auth/main.go (0.0%)</option>
+				<option value="file25">TikTokMall/app/auth/kitex_gen/auth/authservice/server.go (0.0%)</option>
+				
+				<option value="file26">TikTokMall/app/auth/main.go (0.0%)</option>
+				
+				<option value="file27">TikTokMall/app/auth/pkg/hertz/registry.go (0.0%)</option>
+				
+				<option value="file28">TikTokMall/app/auth/pkg/prometheus/timer.go (0.0%)</option>
+				
+				<option value="file29">TikTokMall/app/auth/pkg/tracer/init.go (0.0%)</option>
 				
 				</select>
 			</div>
@@ -754,6 +762,7 @@ const (
         TokenLength            = 32                 // 令牌长度（字节）
         MaxLoginRetries        = 5                  // 最大登录重试次数
         LoginRetryWindow       = time.Hour          // 登录重试窗口期
+        maxLoginAttempts       = 5                  // 最大登录尝试次数
 
         // 用户状态
         UserStatusNormal = 1 // 正常
@@ -1221,18 +1230,35 @@ func (s *VerifyTokenByRPCService) Run(req *auth.VerifyTokenReq) (resp *auth.Veri
 }</span>
 </pre>
 		
-		<pre class="file" id="file16" style="display: none">package conf
+		<pre class="file" id="file16" style="display: none">package utils
+
+import "net"
+
+// NewNetAddr creates a new net.Addr
+func NewNetAddr(network, addr string) net.Addr <span class="cov0" title="0">{
+        return &amp;netAddr{network: network, addr: addr}
+}</span>
+
+type netAddr struct {
+        network string
+        addr    string
+}
+
+func (n *netAddr) Network() string <span class="cov0" title="0">{ return n.network }</span>
+func (n *netAddr) String() string  <span class="cov0" title="0">{ return n.addr }</span>
+</pre>
+		
+		<pre class="file" id="file17" style="display: none">package conf
 
 import (
-        "io/ioutil"
         "os"
         "path/filepath"
         "sync"
 
         "github.com/cloudwego/kitex/pkg/klog"
         "github.com/kr/pretty"
+        "github.com/spf13/viper"
         "gopkg.in/validator.v2"
-        "gopkg.in/yaml.v2"
 )
 
 var (
@@ -1241,65 +1267,94 @@ var (
 )
 
 type Config struct {
-        Env      string
-        Kitex    Kitex    `yaml:"kitex"`
-        MySQL    MySQL    `yaml:"mysql"`
-        Redis    Redis    `yaml:"redis"`
-        Registry Registry `yaml:"registry"`
+        Env        string           `mapstructure:"env"`
+        Service    ServiceConfig    `mapstructure:"service"`
+        MySQL      MySQLConfig      `mapstructure:"mysql"`
+        Redis      RedisConfig      `mapstructure:"redis"`
+        Registry   RegistryConfig   `mapstructure:"registry"`
+        Log        LogConfig        `mapstructure:"log"`
+        Jaeger     JaegerConfig     `mapstructure:"jaeger"`
+        Prometheus PrometheusConfig `mapstructure:"prometheus"`
 }
 
-type MySQL struct {
-        DSN string `yaml:"dsn"`
+type ServiceConfig struct {
+        Name     string `mapstructure:"name"`
+        Port     int    `mapstructure:"port"`
+        LogLevel string `mapstructure:"log_level"`
 }
 
-type Redis struct {
-        Address  string `yaml:"address"`
-        Username string `yaml:"username"`
-        Password string `yaml:"password"`
-        DB       int    `yaml:"db"`
+type MySQLConfig struct {
+        DSN string `mapstructure:"dsn"`
+}
+
+type RedisConfig struct {
+        Address  string `mapstructure:"address"`
+        Username string `mapstructure:"username"`
+        Password string `mapstructure:"password"`
+        DB       int    `mapstructure:"db"`
 }
 
 type Kitex struct {
-        Service       string `yaml:"service"`
-        Address       string `yaml:"address"`
-        LogLevel      string `yaml:"log_level"`
-        LogFileName   string `yaml:"log_file_name"`
-        LogMaxSize    int    `yaml:"log_max_size"`
-        LogMaxBackups int    `yaml:"log_max_backups"`
-        LogMaxAge     int    `yaml:"log_max_age"`
+        Service       string `mapstructure:"service"`
+        Address       string `mapstructure:"address"`
+        LogLevel      string `mapstructure:"log_level"`
+        LogFileName   string `mapstructure:"log_file_name"`
+        LogMaxSize    int    `mapstructure:"log_max_size"`
+        LogMaxBackups int    `mapstructure:"log_max_backups"`
+        LogMaxAge     int    `mapstructure:"log_max_age"`
 }
 
-type Registry struct {
-        RegistryAddress []string `yaml:"registry_address"`
-        Username        string   `yaml:"username"`
-        Password        string   `yaml:"password"`
+type RegistryConfig struct {
+        RegistryAddress []string `mapstructure:"registry_address"`
+        Username        string   `mapstructure:"username"`
+        Password        string   `mapstructure:"password"`
+}
+
+type LogConfig struct {
+        Level string `mapstructure:"level"`
+}
+
+type JaegerConfig struct {
+        Host         string  `mapstructure:"host"`
+        Port         int     `mapstructure:"port"`
+        SamplerType  string  `mapstructure:"sampler_type"`
+        SamplerParam float64 `mapstructure:"sampler_param"`
+        LogSpans     bool    `mapstructure:"log_spans"`
+}
+
+type PrometheusConfig struct {
+        Port int    `mapstructure:"port"`
+        Path string `mapstructure:"path"`
 }
 
 // GetConf gets configuration instance
 func GetConf() *Config <span class="cov0" title="0">{
-        once.Do(initConf)
         return conf
 }</span>
 
-func initConf() <span class="cov0" title="0">{
-        prefix := "conf"
-        confFileRelPath := filepath.Join(prefix, filepath.Join(GetEnv(), "conf.yaml"))
-        content, err := ioutil.ReadFile(confFileRelPath)
-        if err != nil </span><span class="cov0" title="0">{
-                panic(err)</span>
-        }
-        <span class="cov0" title="0">conf = new(Config)
-        err = yaml.Unmarshal(content, conf)
-        if err != nil </span><span class="cov0" title="0">{
-                klog.Error("parse yaml error - %v", err)
-                panic(err)</span>
-        }
-        <span class="cov0" title="0">if err := validator.Validate(conf); err != nil </span><span class="cov0" title="0">{
-                klog.Error("validate config error - %v", err)
-                panic(err)</span>
-        }
-        <span class="cov0" title="0">conf.Env = GetEnv()
-        pretty.Printf("%+v\n", conf)</span>
+func Init() error <span class="cov0" title="0">{
+        once.Do(func() </span><span class="cov0" title="0">{
+                viper.SetConfigName("conf")
+                viper.SetConfigType("yaml")
+                viper.AddConfigPath(filepath.Join("conf", GetEnv()))
+
+                if err := viper.ReadInConfig(); err != nil </span><span class="cov0" title="0">{
+                        klog.Fatalf("读取配置文件失败: %v", err)
+                }</span>
+
+                <span class="cov0" title="0">conf = new(Config)
+                if err := viper.Unmarshal(conf); err != nil </span><span class="cov0" title="0">{
+                        klog.Fatalf("解析配置文件失败: %v", err)
+                }</span>
+
+                <span class="cov0" title="0">if err := validator.Validate(conf); err != nil </span><span class="cov0" title="0">{
+                        klog.Fatalf("验证配置失败: %v", err)
+                }</span>
+
+                <span class="cov0" title="0">conf.Env = GetEnv()
+                pretty.Printf("%+v\n", conf)</span>
+        })
+        <span class="cov0" title="0">return nil</span>
 }
 
 func GetEnv() string <span class="cov0" title="0">{
@@ -1311,7 +1366,7 @@ func GetEnv() string <span class="cov0" title="0">{
 }
 
 func LogLevel() klog.Level <span class="cov0" title="0">{
-        level := GetConf().Kitex.LogLevel
+        level := GetConf().Service.LogLevel
         switch level </span>{
         case "trace":<span class="cov0" title="0">
                 return klog.LevelTrace</span>
@@ -1333,12 +1388,15 @@ func LogLevel() klog.Level <span class="cov0" title="0">{
 }
 </pre>
 		
-		<pre class="file" id="file17" style="display: none">package main
+		<pre class="file" id="file18" style="display: none">package main
 
 import (
-        auth "TikTokMall/app/auth/kitex_gen/auth"
         "context"
+
+        "TikTokMall/app/auth/biz/dal/mysql"
+        "TikTokMall/app/auth/biz/dal/redis"
         "TikTokMall/app/auth/biz/service"
+        auth "TikTokMall/app/auth/kitex_gen/auth"
 )
 
 // AuthServiceImpl implements the last service interface defined in the IDL.
@@ -1392,9 +1450,24 @@ func (s *AuthServiceImpl) ValidateToken(ctx context.Context, req *auth.ValidateT
 
         return resp, err
 }</span>
+
+// HealthCheck implements the AuthServiceImpl interface.
+func (s *AuthServiceImpl) HealthCheck(ctx context.Context) error <span class="cov0" title="0">{
+        // 检查MySQL连接
+        if err := mysql.DB.Raw("SELECT 1").Error; err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        // 检查Redis连接
+        <span class="cov0" title="0">if err := redis.RDB.Ping(ctx).Err(); err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov0" title="0">return nil</span>
+}
 </pre>
 		
-		<pre class="file" id="file18" style="display: none">// idl/api.proto; 注解拓展
+		<pre class="file" id="file19" style="display: none">// idl/api.proto; 注解拓展
 
 // Code generated by protoc-gen-go. DO NOT EDIT.
 // versions:
@@ -2070,7 +2143,7 @@ func file_api_proto_init() <span class="cov8" title="1">{
 var _ context.Context
 </pre>
 		
-		<pre class="file" id="file19" style="display: none">// Code generated by Fastpb v0.0.2. DO NOT EDIT.
+		<pre class="file" id="file20" style="display: none">// Code generated by Fastpb v0.0.2. DO NOT EDIT.
 
 package auth
 
@@ -3795,7 +3868,7 @@ var fieldIDToName_ValidateTokenData = map[int32]string{
 var _ = api.File_api_proto
 </pre>
 		
-		<pre class="file" id="file20" style="display: none">// Code generated by protoc-gen-go. DO NOT EDIT.
+		<pre class="file" id="file21" style="display: none">// Code generated by protoc-gen-go. DO NOT EDIT.
 // versions:
 //         protoc-gen-go v1.28.1
 //         protoc        v3.20.3
@@ -5337,7 +5410,7 @@ type AuthService interface {
 }
 </pre>
 		
-		<pre class="file" id="file21" style="display: none">// Code generated by Kitex v0.9.1. DO NOT EDIT.
+		<pre class="file" id="file22" style="display: none">// Code generated by Kitex v0.9.1. DO NOT EDIT.
 
 package authservice
 
@@ -6281,7 +6354,7 @@ func (p *kClient) ValidateToken(ctx context.Context, Req *auth.ValidateTokenRequ
 }
 </pre>
 		
-		<pre class="file" id="file22" style="display: none">// Code generated by Kitex v0.9.1. DO NOT EDIT.
+		<pre class="file" id="file23" style="display: none">// Code generated by Kitex v0.9.1. DO NOT EDIT.
 
 package authservice
 
@@ -6356,7 +6429,7 @@ func (p *kAuthServiceClient) ValidateToken(ctx context.Context, Req *auth.Valida
 }</span>
 </pre>
 		
-		<pre class="file" id="file23" style="display: none">// Code generated by Kitex v0.9.1. DO NOT EDIT.
+		<pre class="file" id="file24" style="display: none">// Code generated by Kitex v0.9.1. DO NOT EDIT.
 
 package authservice
 
@@ -6382,7 +6455,7 @@ func NewInvoker(handler auth.AuthService, opts ...server.Option) server.Invoker 
 }
 </pre>
 		
-		<pre class="file" id="file24" style="display: none">// Code generated by Kitex v0.9.1. DO NOT EDIT.
+		<pre class="file" id="file25" style="display: none">// Code generated by Kitex v0.9.1. DO NOT EDIT.
 package authservice
 
 import (
@@ -6408,30 +6481,75 @@ func RegisterService(svr server.Server, handler auth.AuthService, opts ...server
 }</span>
 </pre>
 		
-		<pre class="file" id="file25" style="display: none">package main
+		<pre class="file" id="file26" style="display: none">package main
 
 import (
         "fmt"
         "os"
 
+        "github.com/cloudwego/hertz/pkg/app/middlewares/server/recovery"
         "github.com/cloudwego/hertz/pkg/app/server"
+        "github.com/cloudwego/hertz/pkg/app/server/registry"
         "github.com/cloudwego/hertz/pkg/common/hlog"
         "github.com/hertz-contrib/cors"
 
         "TikTokMall/app/auth/biz/dal/mysql"
         "TikTokMall/app/auth/biz/dal/redis"
         "TikTokMall/app/auth/biz/handler"
+        "TikTokMall/app/auth/biz/utils"
+        "TikTokMall/app/auth/conf"
+        "TikTokMall/app/auth/pkg/hertz"
+        "TikTokMall/app/auth/pkg/tracer"
 )
 
 func main() <span class="cov0" title="0">{
+        // 1. 初始化配置
+        if err := conf.Init(); err != nil </span><span class="cov0" title="0">{
+                hlog.Fatalf("初始化配置失败: %v", err)
+        }</span>
+
+        // 2. 初始化追踪
+        <span class="cov0" title="0">tracer, closer, err := tracer.InitJaeger()
+        if err != nil </span><span class="cov0" title="0">{
+                hlog.Fatalf("初始化Jaeger失败: %v", err)
+        }</span>
+        <span class="cov0" title="0">defer closer.Close()
+        _ = tracer // 暂时不使用 tracer
+
+        // 注释掉这段代码
+        /*
+                // 3. 初始化Prometheus
+                go func() {
+                        http.Handle("/metrics", promhttp.Handler())
+                        if err := http.ListenAndServe(fmt.Sprintf(":%d", config.Prometheus.Port), nil); err != nil {
+                                hlog.Fatalf("启动Prometheus metrics服务失败: %v", err)
+                        }
+                }()
+        */
+
         // 初始化数据库连接
         if err := initDeps(); err != nil </span><span class="cov0" title="0">{
                 hlog.Fatalf("init dependencies failed: %v", err)
         }</span>
 
-        // 创建HTTP服务器
+        // 创建 Consul 注册器
+        <span class="cov0" title="0">r, err := hertz.NewConsulRegister("localhost:8500")
+        if err != nil </span><span class="cov0" title="0">{
+                hlog.Fatalf("create consul register failed: %v", err)
+        }</span>
+
+        // 创建服务器
         <span class="cov0" title="0">h := server.Default(
                 server.WithHostPorts(":8000"),
+                server.WithRegistry(r, &amp;registry.Info{
+                        ServiceName: "auth",
+                        Addr:        utils.NewNetAddr("tcp", "localhost:8000"),
+                        Weight:      10,
+                        Tags: map[string]string{
+                                "version": "v1",
+                                "service": "auth",
+                        },
+                }),
         )
 
         // 添加CORS中间件
@@ -6441,6 +6559,9 @@ func main() <span class="cov0" title="0">{
                 AllowHeaders: []string{"Origin", "Content-Type", "Accept", "Authorization"},
                 MaxAge:       3600,
         }))
+
+        // 添加恢复中间件
+        h.Use(recovery.Recovery())
 
         // 创建处理器
         authHandler := handler.NewAuthHandler()
@@ -6465,8 +6586,8 @@ func main() <span class="cov0" title="0">{
 func initDeps() error <span class="cov0" title="0">{
         // 初始化MySQL
         dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&amp;parseTime=True&amp;loc=Local",
-                getEnvOrDefault("MYSQL_USER", "root"),
-                getEnvOrDefault("MYSQL_PASSWORD", "123456"),
+                getEnvOrDefault("MYSQL_USER", "tiktok"),
+                getEnvOrDefault("MYSQL_PASSWORD", "tiktok123"),
                 getEnvOrDefault("MYSQL_HOST", "localhost"),
                 getEnvOrDefault("MYSQL_PORT", "3306"),
                 getEnvOrDefault("MYSQL_DATABASE", "tiktok_mall"),
@@ -6493,6 +6614,113 @@ func getEnvOrDefault(key, defaultValue string) string <span class="cov0" title="
                 return value
         }</span>
         <span class="cov0" title="0">return defaultValue</span>
+}
+</pre>
+		
+		<pre class="file" id="file27" style="display: none">package hertz
+
+import (
+        "net"
+
+        "github.com/cloudwego/hertz/pkg/app/server/registry"
+        consulapi "github.com/hashicorp/consul/api"
+        "github.com/hertz-contrib/registry/consul"
+)
+
+// Info 服务注册信息
+type Info struct {
+        ServiceName string
+        Addr        net.Addr
+        Weight      int
+        Tags        []string
+}
+
+// NewConsulRegister 创建 Consul 注册器
+func NewConsulRegister(addr string) (registry.Registry, error) <span class="cov0" title="0">{
+        // 创建 Consul 客户端配置
+        cfg := consulapi.DefaultConfig()
+        cfg.Address = addr
+
+        // 创建 Consul 客户端
+        cli, err := consulapi.NewClient(cfg)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        // 创建并返回注册器
+        <span class="cov0" title="0">r := consul.NewConsulRegister(cli)
+        return r, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file28" style="display: none">package prometheus
+
+import (
+        "time"
+
+        "github.com/prometheus/client_golang/prometheus"
+)
+
+type Timer struct {
+        observer prometheus.Observer
+        start    float64
+}
+
+func NewTimer(o prometheus.Observer) *Timer <span class="cov0" title="0">{
+        return &amp;Timer{
+                observer: o,
+                start:    float64(time.Now().UnixNano()) / 1e9,
+        }
+}</span>
+
+func (t *Timer) ObserveDuration() <span class="cov0" title="0">{
+        if t.observer == nil </span><span class="cov0" title="0">{
+                return
+        }</span>
+        <span class="cov0" title="0">t.observer.Observe(float64(time.Now().UnixNano())/1e9 - t.start)</span>
+}
+</pre>
+		
+		<pre class="file" id="file29" style="display: none">package tracer
+
+import (
+        "fmt"
+        "io"
+
+        "github.com/opentracing/opentracing-go"
+        "github.com/uber/jaeger-client-go"
+        jaegercfg "github.com/uber/jaeger-client-go/config"
+        "github.com/uber/jaeger-lib/metrics"
+
+        "TikTokMall/app/auth/conf"
+)
+
+func InitJaeger() (opentracing.Tracer, io.Closer, error) <span class="cov0" title="0">{
+        config := conf.GetConf()
+        cfg := &amp;jaegercfg.Configuration{
+                ServiceName: config.Service.Name,
+                Sampler: &amp;jaegercfg.SamplerConfig{
+                        Type:  config.Jaeger.SamplerType,
+                        Param: config.Jaeger.SamplerParam,
+                },
+                Reporter: &amp;jaegercfg.ReporterConfig{
+                        LogSpans:           config.Jaeger.LogSpans,
+                        LocalAgentHostPort: fmt.Sprintf("%s:%d", config.Jaeger.Host, config.Jaeger.Port),
+                },
+        }
+
+        jMetricsFactory := metrics.NullFactory
+
+        tracer, closer, err := cfg.NewTracer(
+                jaegercfg.Logger(jaeger.StdLogger),
+                jaegercfg.Metrics(jMetricsFactory),
+        )
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, nil, fmt.Errorf("无法创建Jaeger tracer: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">opentracing.SetGlobalTracer(tracer)
+        return tracer, closer, nil</span>
 }
 </pre>
 		

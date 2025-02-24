@@ -17,6 +17,7 @@ require (
 	github.com/spf13/viper v1.19.0
 	github.com/uber/jaeger-client-go v2.30.0+incompatible
 	github.com/uber/jaeger-lib v2.4.1+incompatible
+	golang.org/x/crypto v0.22.0
 	google.golang.org/protobuf v1.33.0
 	gopkg.in/validator.v2 v2.0.1
 	gorm.io/driver/mysql v1.5.7

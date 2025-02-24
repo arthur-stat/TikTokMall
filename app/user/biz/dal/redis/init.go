@@ -8,13 +8,12 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-var (
-	UserRDB *redis.Client
-)
+// 全局Redis客户端（与auth服务隔离）
+var RDB *redis.Client
 
-// Init 初始化 Redis 连接
+// Init 初始化Redis连接（参数化配置）
 func Init(addr, password string, db int) error {
-	UserRDB = redis.NewClient(&redis.Options{
+	RDB = redis.NewClient(&redis.Options{
 		Addr:         addr,
 		Password:     password,
 		DB:           db,
@@ -22,23 +21,21 @@ func Init(addr, password string, db int) error {
 		ReadTimeout:  3 * time.Second,
 		WriteTimeout: 3 * time.Second,
 		PoolSize:     10,
-		PoolTimeout:  4 * time.Second,
 	})
 
 	// 测试连接
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-
-	if err := UserRDB.Ping(ctx).Err(); err != nil {
-		return fmt.Errorf("ping redis failed: %w", err)
+	if err := RDB.Ping(ctx).Err(); err != nil {
+		return fmt.Errorf("redis connection failed: %w", err)
 	}
 
 	return nil
 }
 
-// Close 关闭 Redis 连接
+// Close 关闭连接
 func Close() error {
-	return UserRDB.Close()
+	return RDB.Close()
 }
 
 // // 旧redis初始化代码

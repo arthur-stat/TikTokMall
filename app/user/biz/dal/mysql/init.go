@@ -10,44 +10,39 @@ import (
 	"gorm.io/gorm/schema"
 )
 
-var (
-	UserDB *gorm.DB
-)
+// 全局DB实例（与auth服务隔离）
+var DB *gorm.DB
 
-// Init 初始化 MySQL 连接
+// Init 初始化MySQL连接（接收DSN参数）
 func Init(dsn string) error {
 	var err error
-	UserDB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
+	DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{
-			SingularTable: true, // 使用单数表名
+			SingularTable: true, // 与auth服务表结构一致
 		},
-		Logger: logger.Default.LogMode(logger.Info), // 启用详细日志
+		Logger: logger.Default.LogMode(logger.Info),
 	})
 	if err != nil {
-		return fmt.Errorf("connect mysql failed: %w", err)
+		return fmt.Errorf("mysql connection failed: %w", err)
 	}
 
-	sqlDB, err := UserDB.DB()
-	if err != nil {
-		return fmt.Errorf("get sql.DB failed: %w", err)
-	}
-
-	// 设置连接池参数
-	sqlDB.SetMaxIdleConns(10)           // 设置连接池中的最大空闲连接数
-	sqlDB.SetMaxOpenConns(100)          // 设置数据库的最大打开连接数
-	sqlDB.SetConnMaxLifetime(time.Hour) // 设置连接的最大生命周期
+	// 配置连接池
+	sqlDB, _ := DB.DB()
+	sqlDB.SetMaxIdleConns(10)
+	sqlDB.SetMaxOpenConns(100)
+	sqlDB.SetConnMaxLifetime(time.Hour)
 
 	// 测试连接
 	if err := sqlDB.Ping(); err != nil {
-		return fmt.Errorf("ping mysql failed: %w", err)
+		return fmt.Errorf("mysql ping failed: %w", err)
 	}
 
 	return nil
 }
 
-// Close 关闭 MySQL 连接
+// Close 关闭连接
 func Close() error {
-	sqlDB, err := UserDB.DB()
+	sqlDB, err := DB.DB()
 	if err != nil {
 		return err
 	}

@@ -5,13 +5,75 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="916fdc05-e619-4350-86c0-0294aeb3596f" name="更改" comment="完成payment服务的简单健康检查">
+      <change afterPath="$PROJECT_DIR$/app/user/biz/dal/mysql/user.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/user/biz/dal/redis/user.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/user/biz/handler/user.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/user/biz/handler/user.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/user/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/user/main.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/idl/user.proto" beforeDir="false" afterPath="$PROJECT_DIR$/idl/user.proto" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/kitex_gen/api/api.pb.fast.go" beforeDir="false" afterPath="$PROJECT_DIR$/kitex_gen/api/api.pb.fast.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/kitex_gen/api/api.pb.go" beforeDir="false" afterPath="$PROJECT_DIR$/kitex_gen/api/api.pb.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/CREATE" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/CREATE" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/Dockerfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/GRANT" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/GRANT" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/biz/dal/init.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/biz/dal/init.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/biz/dal/mysql/init.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/biz/dal/mysql/init.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/biz/dal/mysql/token.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/biz/dal/mysql/token.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/biz/dal/redis/init.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/biz/dal/redis/init.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/biz/dal/redis/login_retry.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/biz/dal/redis/login_retry.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/biz/dal/redis/token.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/biz/dal/redis/token.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/biz/handler/auth.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/biz/handler/auth.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/biz/registry/info.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/biz/registry/info.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/biz/service/auth.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/biz/service/auth.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/biz/service/auth_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/biz/service/auth_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/biz/service/deliver_token_by_rpc.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/biz/service/deliver_token_by_rpc.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/biz/service/deliver_token_by_rpc_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/biz/service/deliver_token_by_rpc_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/biz/service/login.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/biz/service/login.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/biz/service/login_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/biz/service/login_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/biz/service/logout.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/biz/service/logout.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/biz/service/logout_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/biz/service/logout_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/biz/service/refresh_token.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/biz/service/refresh_token.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/biz/service/refresh_token_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/biz/service/refresh_token_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/biz/service/register.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/biz/service/register.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/biz/service/register_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/biz/service/register_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/biz/service/validate_token.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/biz/service/validate_token.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/biz/service/validate_token_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/biz/service/validate_token_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/biz/service/verify_token_by_rpc.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/biz/service/verify_token_by_rpc.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/biz/service/verify_token_by_rpc_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/biz/service/verify_token_by_rpc_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/biz/utils/net.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/biz/utils/net.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/build.sh" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/build.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/conf/conf.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/conf/conf.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/conf/dev/conf.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/conf/dev/conf.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/conf/online/conf.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/conf/online/conf.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/conf/test/conf.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/conf/test/conf.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/coverage.html" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/coverage.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/deploy/auth.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/deploy/auth.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/docker-compose.yaml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/docker-compose.yml" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/docker-compose.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/go.mod" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/go.sum" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/handler.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/handler.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/kitex_gen/api/api.pb.fast.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/kitex_gen/api/api.pb.fast.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/kitex_gen/api/api.pb.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/kitex_gen/api/api.pb.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/kitex_gen/auth/auth.pb.fast.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/kitex_gen/auth/auth.pb.fast.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/kitex_gen/auth/auth.pb.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/kitex_gen/auth/auth.pb.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/kitex_gen/auth/authservice/authservice.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/kitex_gen/auth/authservice/authservice.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/kitex_gen/auth/authservice/client.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/kitex_gen/auth/authservice/client.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/kitex_gen/auth/authservice/invoker.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/kitex_gen/auth/authservice/invoker.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/kitex_gen/auth/authservice/server.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/kitex_gen/auth/authservice/server.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/kitex_info.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/kitex_info.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/main.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/pkg/hertz/registry.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/pkg/hertz/registry.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/pkg/metrics/init.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/pkg/metrics/init.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/pkg/prometheus/timer.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/pkg/prometheus/timer.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/pkg/tracer/init.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/pkg/tracer/init.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/prometheus.yml" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/prometheus.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/readme.md" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/readme.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/script/bootstrap.sh" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/script/bootstrap.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/scripts/deploy.sh" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/scripts/deploy.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/scripts/test.sh" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/scripts/test.sh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/user/biz/dal/init.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/user/biz/dal/init.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/user/biz/dal/mysql/init.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/user/biz/dal/mysql/init.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/user/biz/dal/redis/init.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/user/biz/dal/redis/init.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/user/biz/service/user.go" beforeDir="false" afterPath="$PROJECT_DIR$/app/user/biz/service/user.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/user/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/app/user/go.mod" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/user/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/app/user/go.sum" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

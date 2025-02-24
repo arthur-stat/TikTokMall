@@ -4,62 +4,67 @@
 
 认证服务是 TikTokMall 电商平台的核心服务之一，负责处理用户认证、授权和令牌管理等功能。该服务基于 [Kitex](https://github.com/cloudwego/kitex/) 框架开发，提供了高性能的 RPC 接口，支持分布式部署和服务发现。
 
-## 快速启动
+## 启动说明
 
 ### 1. 环境要求
-- Go 1.21 或更高版本
+- Go 1.23.4 或更高版本
 - Docker 和 Docker Compose
 - Git
 
-### 2. 启动基础服务
+### 2. 启动所有依赖服务
 ```bash
 # 停止并删除所有已存在的容器和卷
 docker compose down -v
 
-# 启动 MySQL 和 Redis
-docker compose up -d mysql redis
+# 启动所有依赖服务（MySQL、Redis、Consul、Jaeger、Prometheus）
+docker compose up -d
 ```
 
-### 3. 配置数据库
-等待 MySQL 完全启动后（约15秒），执行以下命令：
-```bash
-# 连接到 MySQL
-mysql -h 127.0.0.1 -P 3307 -u root -proot123
-
-# 在 MySQL 中执行：
-CREATE DATABASE IF NOT EXISTS tiktok_mall;
-DROP USER IF EXISTS 'tiktok'@'%';
-CREATE USER 'tiktok'@'%' IDENTIFIED WITH mysql_native_password BY 'tiktok123';
-GRANT ALL PRIVILEGES ON tiktok_mall.* TO 'tiktok'@'%';
-FLUSH PRIVILEGES;
-```
-
-### 4. 验证服务状态
+### 3. 验证服务状态
 ```bash
 # 检查 MySQL 连接
 mysql -h 127.0.0.1 -P 3307 -u tiktok -ptiktok123 tiktok_mall
 
 # 检查 Redis 连接
 redis-cli -p 6380 ping
+
+# 检查 Consul 状态
+curl localhost:8501/v1/status/leader
+
+# 检查 Jaeger UI
+访问 http://localhost:16687
+
+# 检查 Prometheus
+访问 http://localhost:9091
 ```
 
-### 5. 启动服务
+### 4. 启动服务
 ```bash
+# 编译并运行服务
+go build -o auth_service
+./auth_service
+
+# 或直接运行
 go run main.go
 ```
 
-### 6. 服务端口
+### 5. 服务端口说明
 - RPC 服务端口：8888
 - HTTP 服务端口：8000
-- Prometheus 监控端口：9091
 - MySQL 端口：3307
 - Redis 端口：6380
+- Consul 端口：8501
+- Jaeger 端口：6832(UDP), 16687(UI)
+- Prometheus 端口：9091
 
 ## 配置说明
 
 配置文件位于 `conf/test/conf.yaml`，包含：
 - MySQL 连接信息
 - Redis 连接信息
+- Consul 服务发现配置
+- Jaeger 链路追踪配置
+- Prometheus 监控配置
 - 服务端口设置
 - 日志级别设置
 
@@ -142,7 +147,7 @@ go mod tidy
 
 启动依赖服务：
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 启动认证服务：
