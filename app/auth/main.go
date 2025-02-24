@@ -34,6 +34,7 @@ func main() {
 	_ = tracer // 暂时不使用 tracer
 
 	// 注释掉这段代码
+	// TODO: 存在版本兼容问题
 	/*
 		// 3. 初始化Prometheus
 		go func() {

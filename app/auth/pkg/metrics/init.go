@@ -1,5 +1,7 @@
+// TODO: 等待 Prometheus 完全兼容 Go 1.23.4
 package metrics
 
+/*
 import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -31,3 +33,4 @@ var (
 		[]string{"operation", "status"},
 	)
 )
+*/
