@@ -2,20 +2,79 @@
 
 ## 介绍
 
-购物车服务是 TikTokMall 电商平台的核心服务之一，负责处理用户的购物车管理、商品操作等功能。该服务基于 [Kitex](https://github.com/cloudwego/kitex/) 框架开发，提供了高性能的 RPC 接口，支持分布式部署和服务发现。
+购物车服务是 TikTokMall 电商平台的核心服务之一，负责处理购物车管理、商品添加删除、数量修改等功能。该服务基于 [Kitex](https://github.com/cloudwego/kitex/) 框架开发，提供了高性能的 RPC 接口，支持分布式部署和服务发现。
 
-服务默认端口：
-- RPC 服务端口：8080
-- Prometheus 监控端口：9090
-- 健康检查端口：8080/health
+## 启动说明
+
+### 1. 环境要求
+- Go 1.23.4 或更高版本
+- Docker 和 Docker Compose
+- Git
+
+### 2. 启动所有依赖服务
+```bash
+# 停止并删除所有已存在的容器和卷
+docker compose down -v
+
+# 启动所有依赖服务（MySQL、Redis、Consul、Jaeger、Prometheus）
+docker compose up -d
+```
+
+### 3. 验证服务状态
+```bash
+# 检查 MySQL 连接
+mysql -h 127.0.0.1 -P 3307 -u tiktok -ptiktok123 tiktok_mall
+
+# 检查 Redis 连接
+redis-cli -p 6380 ping
+
+# 检查 Consul 状态
+curl localhost:8501/v1/status/leader
+
+# 检查 Jaeger UI
+访问 http://localhost:16687
+
+# 检查 Prometheus
+访问 http://localhost:9091
+```
+
+### 4. 启动服务
+```bash
+# 编译并运行服务
+go build -o cart_service
+./cart_service
+
+# 或直接运行
+go run main.go
+```
+
+### 5. 服务端口说明
+- RPC 服务端口：8888
+- HTTP 服务端口：8000
+- MySQL 端口：3307
+- Redis 端口：6380
+- Consul 端口：8501
+- Jaeger 端口：6832(UDP), 16687(UI)
+- Prometheus 端口：9091
+
+## 配置说明
+
+配置文件位于 `conf/test/conf.yaml`，包含：
+- MySQL 连接信息
+- Redis 连接信息
+- Consul 服务发现配置
+- Jaeger 链路追踪配置
+- Prometheus 监控配置
+- 服务端口设置
+- 日志级别设置
 
 ## 主要功能
 
-- **购物车管理**：添加、更新、删除购物车商品。
-- **商品操作**：商品数量调整，商品选择状态管理。
-- **数据同步**：MySQL持久化存储，Redis缓存加速。
-- **库存检查**：商品添加时进行库存验证。
-- **价格计算**：实时计算购物车商品总价。
+- **购物车管理**：添加、删除、修改购物车商品
+- **商品数量控制**：修改商品数量，库存检查
+- **商品选择**：选择/取消选择购物车商品
+- **价格计算**：实时计算选中商品总价
+- **库存同步**：与商品服务同步库存信息
 
 ## 目录结构
 
