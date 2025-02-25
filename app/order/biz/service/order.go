@@ -13,10 +13,20 @@ import (
 	"TikTokMall/app/order/kitex_gen/order"
 )
 
-type orderService struct{}
+type orderService struct {
+	orderRepo OrderRepository
+}
 
-func NewOrderService() OrderService {
-	return &orderService{}
+type OrderRepository interface {
+	CreateOrder(ctx context.Context, order *mysql.Order, items []*mysql.OrderItem) error
+	ListOrdersByUserID(ctx context.Context, userID uint32) ([]*mysql.Order, error)
+	UpdateOrderStatus(ctx context.Context, orderID int64, status int8) error
+}
+
+func NewOrderService(repo OrderRepository) OrderService {
+	return &orderService{
+		orderRepo: repo,
+	}
 }
 
 func (s *orderService) PlaceOrder(ctx context.Context, req *order.PlaceOrderReq) (*order.PlaceOrderResp, error) {
@@ -54,7 +64,7 @@ func (s *orderService) PlaceOrder(ctx context.Context, req *order.PlaceOrderReq)
 	newOrder.TotalAmount = totalAmount
 
 	// 3. 保存到数据库
-	if err := mysql.CreateOrder(ctx, newOrder, orderItems); err != nil {
+	if err := s.orderRepo.CreateOrder(ctx, newOrder, orderItems); err != nil {
 		return nil, fmt.Errorf("create order failed: %w", err)
 	}
 
@@ -73,7 +83,7 @@ func (s *orderService) PlaceOrder(ctx context.Context, req *order.PlaceOrderReq)
 
 func (s *orderService) ListOrder(ctx context.Context, req *order.ListOrderReq) (*order.ListOrderResp, error) {
 	// 获取用户订单列表
-	orders, err := mysql.ListOrdersByUserID(ctx, req.UserId)
+	orders, err := s.orderRepo.ListOrdersByUserID(ctx, req.UserId)
 	if err != nil {
 		return nil, fmt.Errorf("list orders failed: %w", err)
 	}
@@ -111,7 +121,7 @@ func (s *orderService) MarkOrderPaid(ctx context.Context, req *order.MarkOrderPa
 	}
 
 	// 更新订单状态
-	if err := mysql.UpdateOrderStatus(ctx, orderID, mysql.OrderStatusPaid); err != nil {
+	if err := s.orderRepo.UpdateOrderStatus(ctx, orderID, mysql.OrderStatusPaid); err != nil {
 		return nil, fmt.Errorf("update order status failed: %w", err)
 	}
 

@@ -2,10 +2,12 @@ package handler
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
 
+	"TikTokMall/app/order/biz/dal/mysql"
 	"TikTokMall/app/order/biz/service"
 	"TikTokMall/app/order/kitex_gen/order"
 )
@@ -15,8 +17,9 @@ type OrderHTTPHandler struct {
 }
 
 func NewOrderHTTPHandler() *OrderHTTPHandler {
+	repo := mysql.NewOrderMySQLRepository()
 	return &OrderHTTPHandler{
-		svc: service.NewOrderService(),
+		svc: service.NewOrderService(repo),
 	}
 }
 
@@ -44,12 +47,26 @@ func (h *OrderHTTPHandler) PlaceOrder(c context.Context, ctx *app.RequestContext
 // ListOrder handles HTTP request for listing orders
 func (h *OrderHTTPHandler) ListOrder(c context.Context, ctx *app.RequestContext) {
 	var req order.ListOrderReq
-	if err := ctx.BindAndValidate(&req); err != nil {
+
+	// 从查询参数中获取 user_id
+	userIDStr := ctx.Query("user_id")
+	if userIDStr == "" {
 		ctx.JSON(consts.StatusBadRequest, map[string]interface{}{
-			"error": err.Error(),
+			"error": "invalid user_id",
 		})
 		return
 	}
+
+	// 转换为 uint32
+	userID, err := strconv.ParseUint(userIDStr, 10, 32)
+	if err != nil {
+		ctx.JSON(consts.StatusBadRequest, map[string]interface{}{
+			"error": "invalid user_id format",
+		})
+		return
+	}
+
+	req.UserId = uint32(userID)
 
 	resp, err := h.svc.ListOrder(c, &req)
 	if err != nil {
