@@ -21,7 +21,7 @@ func CreatePayment(db *gorm.DB, ctx context.Context, payment *model.Payments) er
 }
 
 // GetPaymentByOrderID 根据订单 ID 获取支付记录
-func GetPaymentByOrderID(db *gorm.DB, ctx context.Context, orderID int64) (*model.Payments, error) {
+func GetPaymentByOrderID(db *gorm.DB, ctx context.Context, orderID string) (*model.Payments, error) {
 	var payment model.Payments
 	err := db.WithContext(ctx).Where("order_id = ?", orderID).First(&payment).Error
 	if err != nil {

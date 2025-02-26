@@ -33,3 +33,21 @@ func AlipayCharge(ctx context.Context, req *payment.AlipayChargeReq, callOptions
 	}
 	return resp, nil
 }
+
+func AlipayRefund(ctx context.Context, req *payment.AlipayRefundReq, callOptions ...callopt.Option) (resp *payment.AlipayRefundResp, err error) {
+	resp, err = defaultClient.AlipayRefund(ctx, req, callOptions...)
+	if err != nil {
+		klog.CtxErrorf(ctx, "AlipayRefund call failed,err =%+v", err)
+		return nil, err
+	}
+	return resp, nil
+}
+
+func AlipayNotify(ctx context.Context, req *payment.AlipayNotifyReq, callOptions ...callopt.Option) (resp *payment.AlipayNotifyResp, err error) {
+	resp, err = defaultClient.AlipayNotify(ctx, req, callOptions...)
+	if err != nil {
+		klog.CtxErrorf(ctx, "AlipayNotify call failed,err =%+v", err)
+		return nil, err
+	}
+	return resp, nil
+}

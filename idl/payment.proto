@@ -16,6 +16,12 @@ service PaymentService {
   rpc AlipayCharge(AlipayChargeReq) returns (AlipayChargeResp) {
     option (api.post) = "/payment/alipay_charge";
   }
+  rpc AlipayRefund(AlipayRefundReq) returns (AlipayRefundResp) {
+    option (api.post) = "/payment/alipay_refund";
+  }
+  rpc AlipayNotify(AlipayNotifyReq) returns (AlipayNotifyResp) {
+    option (api.post) = "/payment/alipay_notify";
+  }
 }
 
 message CreditCardInfo {
@@ -30,7 +36,7 @@ message ChargeReq {
   float amount = 1 [(api.body) = "amount"];                     // 支付金额
   CreditCardInfo credit_card = 2 [(api.body) = "credit_card"];  // 信用卡信息
   string payment_method = 5 [(api.body) = "payment_method"];    // 支付方式
-  int64 order_id = 3 [(api.body) = "order_id"];                 // 订单ID
+  string order_id = 3 [(api.body) = "order_id"];                 // 订单ID
   int64 user_id = 4 [(api.body) = "user_id"];                   // 用户ID
 }
 
@@ -42,7 +48,7 @@ message ChargeResp {
 // 退款请求参数
 message RefundReq {
   string transaction_id = 1 [(api.body) = "transaction_id"];  // 原交易ID
-  int64 order_id = 2 [(api.body) = "order_id"];               // 订单ID
+  string order_id = 2 [(api.body) = "order_id"];               // 订单ID
   float amount = 3 [(api.body) = "amount"];                   // 退款金额
   string reason = 4 [(api.body) = "reason"];                  // 退款原因
   int64 user_id = 5 [(api.body) = "user_id"];                 // 用户ID
@@ -54,7 +60,7 @@ message RefundResp {
 }
 
 message AlipayChargeReq {
-  int64 order_id = 1 [(api.body) = "order_id"];
+  string order_id = 1 [(api.body) = "order_id"];
   int64 user_id = 2 [(api.body) = "user_id"];
   float amount = 3 [(api.body) = "amount"];
   string return_url = 4 [(api.body) = "return_url"];
@@ -62,4 +68,30 @@ message AlipayChargeReq {
 
 message AlipayChargeResp {
   string pay_url = 1;
+}
+
+message AlipayRefundReq {
+  string transaction_id = 1;
+  float refund_amount = 2;
+  string refund_reason = 3;
+  string refund_id = 4;
+}
+
+message AlipayRefundResp{
+  string refund_result = 1;
+}
+
+message AlipayNotifyReq {
+  string notify_id = 1 [(api.body) = "notify_id"];         // 通知校验ID
+  string out_trade_no = 2 [(api.body) = "out_trade_no"];   // 商户订单号
+  string trade_no = 3 [(api.body) = "trade_no"];           // 支付宝交易号
+  string trade_status = 4 [(api.body) = "trade_status"];   // 交易状态
+  string sign_type = 5 [(api.body) = "sign_type"];         // 签名算法类型
+  string sign = 6 [(api.body) = "sign"];                   // 签名
+  float total_amount = 7 [(api.body) = "total_amount"];    // 订单金额
+  string notify_time = 8 [(api.body) = "notify_time"];     // 通知时间
+}
+
+message AlipayNotifyResp {
+  string status = 1;
 }

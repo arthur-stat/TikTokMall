@@ -124,7 +124,7 @@ func (x *ChargeReq) fastReadField2(buf []byte, _type int8) (offset int, err erro
 }
 
 func (x *ChargeReq) fastReadField3(buf []byte, _type int8) (offset int, err error) {
-	x.OrderId, offset, err = fastpb.ReadInt64(buf, _type)
+	x.OrderId, offset, err = fastpb.ReadString(buf, _type)
 	return offset, err
 }
 
@@ -209,7 +209,7 @@ func (x *RefundReq) fastReadField1(buf []byte, _type int8) (offset int, err erro
 }
 
 func (x *RefundReq) fastReadField2(buf []byte, _type int8) (offset int, err error) {
-	x.OrderId, offset, err = fastpb.ReadInt64(buf, _type)
+	x.OrderId, offset, err = fastpb.ReadString(buf, _type)
 	return offset, err
 }
 
@@ -289,7 +289,7 @@ ReadFieldError:
 }
 
 func (x *AlipayChargeReq) fastReadField1(buf []byte, _type int8) (offset int, err error) {
-	x.OrderId, offset, err = fastpb.ReadInt64(buf, _type)
+	x.OrderId, offset, err = fastpb.ReadString(buf, _type)
 	return offset, err
 }
 
@@ -330,6 +330,206 @@ ReadFieldError:
 
 func (x *AlipayChargeResp) fastReadField1(buf []byte, _type int8) (offset int, err error) {
 	x.PayUrl, offset, err = fastpb.ReadString(buf, _type)
+	return offset, err
+}
+
+func (x *AlipayRefundReq) FastRead(buf []byte, _type int8, number int32) (offset int, err error) {
+	switch number {
+	case 1:
+		offset, err = x.fastReadField1(buf, _type)
+		if err != nil {
+			goto ReadFieldError
+		}
+	case 2:
+		offset, err = x.fastReadField2(buf, _type)
+		if err != nil {
+			goto ReadFieldError
+		}
+	case 3:
+		offset, err = x.fastReadField3(buf, _type)
+		if err != nil {
+			goto ReadFieldError
+		}
+	case 4:
+		offset, err = x.fastReadField4(buf, _type)
+		if err != nil {
+			goto ReadFieldError
+		}
+	default:
+		offset, err = fastpb.Skip(buf, _type, number)
+		if err != nil {
+			goto SkipFieldError
+		}
+	}
+	return offset, nil
+SkipFieldError:
+	return offset, fmt.Errorf("%T cannot parse invalid wire-format data, error: %s", x, err)
+ReadFieldError:
+	return offset, fmt.Errorf("%T read field %d '%s' error: %s", x, number, fieldIDToName_AlipayRefundReq[number], err)
+}
+
+func (x *AlipayRefundReq) fastReadField1(buf []byte, _type int8) (offset int, err error) {
+	x.TransactionId, offset, err = fastpb.ReadString(buf, _type)
+	return offset, err
+}
+
+func (x *AlipayRefundReq) fastReadField2(buf []byte, _type int8) (offset int, err error) {
+	x.RefundAmount, offset, err = fastpb.ReadFloat(buf, _type)
+	return offset, err
+}
+
+func (x *AlipayRefundReq) fastReadField3(buf []byte, _type int8) (offset int, err error) {
+	x.RefundReason, offset, err = fastpb.ReadString(buf, _type)
+	return offset, err
+}
+
+func (x *AlipayRefundReq) fastReadField4(buf []byte, _type int8) (offset int, err error) {
+	x.RefundId, offset, err = fastpb.ReadString(buf, _type)
+	return offset, err
+}
+
+func (x *AlipayRefundResp) FastRead(buf []byte, _type int8, number int32) (offset int, err error) {
+	switch number {
+	case 1:
+		offset, err = x.fastReadField1(buf, _type)
+		if err != nil {
+			goto ReadFieldError
+		}
+	default:
+		offset, err = fastpb.Skip(buf, _type, number)
+		if err != nil {
+			goto SkipFieldError
+		}
+	}
+	return offset, nil
+SkipFieldError:
+	return offset, fmt.Errorf("%T cannot parse invalid wire-format data, error: %s", x, err)
+ReadFieldError:
+	return offset, fmt.Errorf("%T read field %d '%s' error: %s", x, number, fieldIDToName_AlipayRefundResp[number], err)
+}
+
+func (x *AlipayRefundResp) fastReadField1(buf []byte, _type int8) (offset int, err error) {
+	x.RefundResult, offset, err = fastpb.ReadString(buf, _type)
+	return offset, err
+}
+
+func (x *AlipayNotifyReq) FastRead(buf []byte, _type int8, number int32) (offset int, err error) {
+	switch number {
+	case 1:
+		offset, err = x.fastReadField1(buf, _type)
+		if err != nil {
+			goto ReadFieldError
+		}
+	case 2:
+		offset, err = x.fastReadField2(buf, _type)
+		if err != nil {
+			goto ReadFieldError
+		}
+	case 3:
+		offset, err = x.fastReadField3(buf, _type)
+		if err != nil {
+			goto ReadFieldError
+		}
+	case 4:
+		offset, err = x.fastReadField4(buf, _type)
+		if err != nil {
+			goto ReadFieldError
+		}
+	case 5:
+		offset, err = x.fastReadField5(buf, _type)
+		if err != nil {
+			goto ReadFieldError
+		}
+	case 6:
+		offset, err = x.fastReadField6(buf, _type)
+		if err != nil {
+			goto ReadFieldError
+		}
+	case 7:
+		offset, err = x.fastReadField7(buf, _type)
+		if err != nil {
+			goto ReadFieldError
+		}
+	case 8:
+		offset, err = x.fastReadField8(buf, _type)
+		if err != nil {
+			goto ReadFieldError
+		}
+	default:
+		offset, err = fastpb.Skip(buf, _type, number)
+		if err != nil {
+			goto SkipFieldError
+		}
+	}
+	return offset, nil
+SkipFieldError:
+	return offset, fmt.Errorf("%T cannot parse invalid wire-format data, error: %s", x, err)
+ReadFieldError:
+	return offset, fmt.Errorf("%T read field %d '%s' error: %s", x, number, fieldIDToName_AlipayNotifyReq[number], err)
+}
+
+func (x *AlipayNotifyReq) fastReadField1(buf []byte, _type int8) (offset int, err error) {
+	x.NotifyId, offset, err = fastpb.ReadString(buf, _type)
+	return offset, err
+}
+
+func (x *AlipayNotifyReq) fastReadField2(buf []byte, _type int8) (offset int, err error) {
+	x.OutTradeNo, offset, err = fastpb.ReadString(buf, _type)
+	return offset, err
+}
+
+func (x *AlipayNotifyReq) fastReadField3(buf []byte, _type int8) (offset int, err error) {
+	x.TradeNo, offset, err = fastpb.ReadString(buf, _type)
+	return offset, err
+}
+
+func (x *AlipayNotifyReq) fastReadField4(buf []byte, _type int8) (offset int, err error) {
+	x.TradeStatus, offset, err = fastpb.ReadString(buf, _type)
+	return offset, err
+}
+
+func (x *AlipayNotifyReq) fastReadField5(buf []byte, _type int8) (offset int, err error) {
+	x.SignType, offset, err = fastpb.ReadString(buf, _type)
+	return offset, err
+}
+
+func (x *AlipayNotifyReq) fastReadField6(buf []byte, _type int8) (offset int, err error) {
+	x.Sign, offset, err = fastpb.ReadString(buf, _type)
+	return offset, err
+}
+
+func (x *AlipayNotifyReq) fastReadField7(buf []byte, _type int8) (offset int, err error) {
+	x.TotalAmount, offset, err = fastpb.ReadFloat(buf, _type)
+	return offset, err
+}
+
+func (x *AlipayNotifyReq) fastReadField8(buf []byte, _type int8) (offset int, err error) {
+	x.NotifyTime, offset, err = fastpb.ReadString(buf, _type)
+	return offset, err
+}
+
+func (x *AlipayNotifyResp) FastRead(buf []byte, _type int8, number int32) (offset int, err error) {
+	switch number {
+	case 1:
+		offset, err = x.fastReadField1(buf, _type)
+		if err != nil {
+			goto ReadFieldError
+		}
+	default:
+		offset, err = fastpb.Skip(buf, _type, number)
+		if err != nil {
+			goto SkipFieldError
+		}
+	}
+	return offset, nil
+SkipFieldError:
+	return offset, fmt.Errorf("%T cannot parse invalid wire-format data, error: %s", x, err)
+ReadFieldError:
+	return offset, fmt.Errorf("%T read field %d '%s' error: %s", x, number, fieldIDToName_AlipayNotifyResp[number], err)
+}
+
+func (x *AlipayNotifyResp) fastReadField1(buf []byte, _type int8) (offset int, err error) {
+	x.Status, offset, err = fastpb.ReadString(buf, _type)
 	return offset, err
 }
 
@@ -405,10 +605,10 @@ func (x *ChargeReq) fastWriteField2(buf []byte) (offset int) {
 }
 
 func (x *ChargeReq) fastWriteField3(buf []byte) (offset int) {
-	if x.OrderId == 0 {
+	if x.OrderId == "" {
 		return offset
 	}
-	offset += fastpb.WriteInt64(buf[offset:], 3, x.GetOrderId())
+	offset += fastpb.WriteString(buf[offset:], 3, x.GetOrderId())
 	return offset
 }
 
@@ -465,10 +665,10 @@ func (x *RefundReq) fastWriteField1(buf []byte) (offset int) {
 }
 
 func (x *RefundReq) fastWriteField2(buf []byte) (offset int) {
-	if x.OrderId == 0 {
+	if x.OrderId == "" {
 		return offset
 	}
-	offset += fastpb.WriteInt64(buf[offset:], 2, x.GetOrderId())
+	offset += fastpb.WriteString(buf[offset:], 2, x.GetOrderId())
 	return offset
 }
 
@@ -524,10 +724,10 @@ func (x *AlipayChargeReq) FastWrite(buf []byte) (offset int) {
 }
 
 func (x *AlipayChargeReq) fastWriteField1(buf []byte) (offset int) {
-	if x.OrderId == 0 {
+	if x.OrderId == "" {
 		return offset
 	}
-	offset += fastpb.WriteInt64(buf[offset:], 1, x.GetOrderId())
+	offset += fastpb.WriteString(buf[offset:], 1, x.GetOrderId())
 	return offset
 }
 
@@ -568,6 +768,160 @@ func (x *AlipayChargeResp) fastWriteField1(buf []byte) (offset int) {
 		return offset
 	}
 	offset += fastpb.WriteString(buf[offset:], 1, x.GetPayUrl())
+	return offset
+}
+
+func (x *AlipayRefundReq) FastWrite(buf []byte) (offset int) {
+	if x == nil {
+		return offset
+	}
+	offset += x.fastWriteField1(buf[offset:])
+	offset += x.fastWriteField2(buf[offset:])
+	offset += x.fastWriteField3(buf[offset:])
+	offset += x.fastWriteField4(buf[offset:])
+	return offset
+}
+
+func (x *AlipayRefundReq) fastWriteField1(buf []byte) (offset int) {
+	if x.TransactionId == "" {
+		return offset
+	}
+	offset += fastpb.WriteString(buf[offset:], 1, x.GetTransactionId())
+	return offset
+}
+
+func (x *AlipayRefundReq) fastWriteField2(buf []byte) (offset int) {
+	if x.RefundAmount == 0 {
+		return offset
+	}
+	offset += fastpb.WriteFloat(buf[offset:], 2, x.GetRefundAmount())
+	return offset
+}
+
+func (x *AlipayRefundReq) fastWriteField3(buf []byte) (offset int) {
+	if x.RefundReason == "" {
+		return offset
+	}
+	offset += fastpb.WriteString(buf[offset:], 3, x.GetRefundReason())
+	return offset
+}
+
+func (x *AlipayRefundReq) fastWriteField4(buf []byte) (offset int) {
+	if x.RefundId == "" {
+		return offset
+	}
+	offset += fastpb.WriteString(buf[offset:], 4, x.GetRefundId())
+	return offset
+}
+
+func (x *AlipayRefundResp) FastWrite(buf []byte) (offset int) {
+	if x == nil {
+		return offset
+	}
+	offset += x.fastWriteField1(buf[offset:])
+	return offset
+}
+
+func (x *AlipayRefundResp) fastWriteField1(buf []byte) (offset int) {
+	if x.RefundResult == "" {
+		return offset
+	}
+	offset += fastpb.WriteString(buf[offset:], 1, x.GetRefundResult())
+	return offset
+}
+
+func (x *AlipayNotifyReq) FastWrite(buf []byte) (offset int) {
+	if x == nil {
+		return offset
+	}
+	offset += x.fastWriteField1(buf[offset:])
+	offset += x.fastWriteField2(buf[offset:])
+	offset += x.fastWriteField3(buf[offset:])
+	offset += x.fastWriteField4(buf[offset:])
+	offset += x.fastWriteField5(buf[offset:])
+	offset += x.fastWriteField6(buf[offset:])
+	offset += x.fastWriteField7(buf[offset:])
+	offset += x.fastWriteField8(buf[offset:])
+	return offset
+}
+
+func (x *AlipayNotifyReq) fastWriteField1(buf []byte) (offset int) {
+	if x.NotifyId == "" {
+		return offset
+	}
+	offset += fastpb.WriteString(buf[offset:], 1, x.GetNotifyId())
+	return offset
+}
+
+func (x *AlipayNotifyReq) fastWriteField2(buf []byte) (offset int) {
+	if x.OutTradeNo == "" {
+		return offset
+	}
+	offset += fastpb.WriteString(buf[offset:], 2, x.GetOutTradeNo())
+	return offset
+}
+
+func (x *AlipayNotifyReq) fastWriteField3(buf []byte) (offset int) {
+	if x.TradeNo == "" {
+		return offset
+	}
+	offset += fastpb.WriteString(buf[offset:], 3, x.GetTradeNo())
+	return offset
+}
+
+func (x *AlipayNotifyReq) fastWriteField4(buf []byte) (offset int) {
+	if x.TradeStatus == "" {
+		return offset
+	}
+	offset += fastpb.WriteString(buf[offset:], 4, x.GetTradeStatus())
+	return offset
+}
+
+func (x *AlipayNotifyReq) fastWriteField5(buf []byte) (offset int) {
+	if x.SignType == "" {
+		return offset
+	}
+	offset += fastpb.WriteString(buf[offset:], 5, x.GetSignType())
+	return offset
+}
+
+func (x *AlipayNotifyReq) fastWriteField6(buf []byte) (offset int) {
+	if x.Sign == "" {
+		return offset
+	}
+	offset += fastpb.WriteString(buf[offset:], 6, x.GetSign())
+	return offset
+}
+
+func (x *AlipayNotifyReq) fastWriteField7(buf []byte) (offset int) {
+	if x.TotalAmount == 0 {
+		return offset
+	}
+	offset += fastpb.WriteFloat(buf[offset:], 7, x.GetTotalAmount())
+	return offset
+}
+
+func (x *AlipayNotifyReq) fastWriteField8(buf []byte) (offset int) {
+	if x.NotifyTime == "" {
+		return offset
+	}
+	offset += fastpb.WriteString(buf[offset:], 8, x.GetNotifyTime())
+	return offset
+}
+
+func (x *AlipayNotifyResp) FastWrite(buf []byte) (offset int) {
+	if x == nil {
+		return offset
+	}
+	offset += x.fastWriteField1(buf[offset:])
+	return offset
+}
+
+func (x *AlipayNotifyResp) fastWriteField1(buf []byte) (offset int) {
+	if x.Status == "" {
+		return offset
+	}
+	offset += fastpb.WriteString(buf[offset:], 1, x.GetStatus())
 	return offset
 }
 
@@ -643,10 +997,10 @@ func (x *ChargeReq) sizeField2() (n int) {
 }
 
 func (x *ChargeReq) sizeField3() (n int) {
-	if x.OrderId == 0 {
+	if x.OrderId == "" {
 		return n
 	}
-	n += fastpb.SizeInt64(3, x.GetOrderId())
+	n += fastpb.SizeString(3, x.GetOrderId())
 	return n
 }
 
@@ -703,10 +1057,10 @@ func (x *RefundReq) sizeField1() (n int) {
 }
 
 func (x *RefundReq) sizeField2() (n int) {
-	if x.OrderId == 0 {
+	if x.OrderId == "" {
 		return n
 	}
-	n += fastpb.SizeInt64(2, x.GetOrderId())
+	n += fastpb.SizeString(2, x.GetOrderId())
 	return n
 }
 
@@ -762,10 +1116,10 @@ func (x *AlipayChargeReq) Size() (n int) {
 }
 
 func (x *AlipayChargeReq) sizeField1() (n int) {
-	if x.OrderId == 0 {
+	if x.OrderId == "" {
 		return n
 	}
-	n += fastpb.SizeInt64(1, x.GetOrderId())
+	n += fastpb.SizeString(1, x.GetOrderId())
 	return n
 }
 
@@ -809,6 +1163,160 @@ func (x *AlipayChargeResp) sizeField1() (n int) {
 	return n
 }
 
+func (x *AlipayRefundReq) Size() (n int) {
+	if x == nil {
+		return n
+	}
+	n += x.sizeField1()
+	n += x.sizeField2()
+	n += x.sizeField3()
+	n += x.sizeField4()
+	return n
+}
+
+func (x *AlipayRefundReq) sizeField1() (n int) {
+	if x.TransactionId == "" {
+		return n
+	}
+	n += fastpb.SizeString(1, x.GetTransactionId())
+	return n
+}
+
+func (x *AlipayRefundReq) sizeField2() (n int) {
+	if x.RefundAmount == 0 {
+		return n
+	}
+	n += fastpb.SizeFloat(2, x.GetRefundAmount())
+	return n
+}
+
+func (x *AlipayRefundReq) sizeField3() (n int) {
+	if x.RefundReason == "" {
+		return n
+	}
+	n += fastpb.SizeString(3, x.GetRefundReason())
+	return n
+}
+
+func (x *AlipayRefundReq) sizeField4() (n int) {
+	if x.RefundId == "" {
+		return n
+	}
+	n += fastpb.SizeString(4, x.GetRefundId())
+	return n
+}
+
+func (x *AlipayRefundResp) Size() (n int) {
+	if x == nil {
+		return n
+	}
+	n += x.sizeField1()
+	return n
+}
+
+func (x *AlipayRefundResp) sizeField1() (n int) {
+	if x.RefundResult == "" {
+		return n
+	}
+	n += fastpb.SizeString(1, x.GetRefundResult())
+	return n
+}
+
+func (x *AlipayNotifyReq) Size() (n int) {
+	if x == nil {
+		return n
+	}
+	n += x.sizeField1()
+	n += x.sizeField2()
+	n += x.sizeField3()
+	n += x.sizeField4()
+	n += x.sizeField5()
+	n += x.sizeField6()
+	n += x.sizeField7()
+	n += x.sizeField8()
+	return n
+}
+
+func (x *AlipayNotifyReq) sizeField1() (n int) {
+	if x.NotifyId == "" {
+		return n
+	}
+	n += fastpb.SizeString(1, x.GetNotifyId())
+	return n
+}
+
+func (x *AlipayNotifyReq) sizeField2() (n int) {
+	if x.OutTradeNo == "" {
+		return n
+	}
+	n += fastpb.SizeString(2, x.GetOutTradeNo())
+	return n
+}
+
+func (x *AlipayNotifyReq) sizeField3() (n int) {
+	if x.TradeNo == "" {
+		return n
+	}
+	n += fastpb.SizeString(3, x.GetTradeNo())
+	return n
+}
+
+func (x *AlipayNotifyReq) sizeField4() (n int) {
+	if x.TradeStatus == "" {
+		return n
+	}
+	n += fastpb.SizeString(4, x.GetTradeStatus())
+	return n
+}
+
+func (x *AlipayNotifyReq) sizeField5() (n int) {
+	if x.SignType == "" {
+		return n
+	}
+	n += fastpb.SizeString(5, x.GetSignType())
+	return n
+}
+
+func (x *AlipayNotifyReq) sizeField6() (n int) {
+	if x.Sign == "" {
+		return n
+	}
+	n += fastpb.SizeString(6, x.GetSign())
+	return n
+}
+
+func (x *AlipayNotifyReq) sizeField7() (n int) {
+	if x.TotalAmount == 0 {
+		return n
+	}
+	n += fastpb.SizeFloat(7, x.GetTotalAmount())
+	return n
+}
+
+func (x *AlipayNotifyReq) sizeField8() (n int) {
+	if x.NotifyTime == "" {
+		return n
+	}
+	n += fastpb.SizeString(8, x.GetNotifyTime())
+	return n
+}
+
+func (x *AlipayNotifyResp) Size() (n int) {
+	if x == nil {
+		return n
+	}
+	n += x.sizeField1()
+	return n
+}
+
+func (x *AlipayNotifyResp) sizeField1() (n int) {
+	if x.Status == "" {
+		return n
+	}
+	n += fastpb.SizeString(1, x.GetStatus())
+	return n
+}
+
 var fieldIDToName_CreditCardInfo = map[int32]string{
 	1: "CreditCardNumber",
 	2: "CreditCardCvv",
@@ -849,6 +1357,32 @@ var fieldIDToName_AlipayChargeReq = map[int32]string{
 
 var fieldIDToName_AlipayChargeResp = map[int32]string{
 	1: "PayUrl",
+}
+
+var fieldIDToName_AlipayRefundReq = map[int32]string{
+	1: "TransactionId",
+	2: "RefundAmount",
+	3: "RefundReason",
+	4: "RefundId",
+}
+
+var fieldIDToName_AlipayRefundResp = map[int32]string{
+	1: "RefundResult",
+}
+
+var fieldIDToName_AlipayNotifyReq = map[int32]string{
+	1: "NotifyId",
+	2: "OutTradeNo",
+	3: "TradeNo",
+	4: "TradeStatus",
+	5: "SignType",
+	6: "Sign",
+	7: "TotalAmount",
+	8: "NotifyTime",
+}
+
+var fieldIDToName_AlipayNotifyResp = map[int32]string{
+	1: "Status",
 }
 
 var _ = api.File_api_proto

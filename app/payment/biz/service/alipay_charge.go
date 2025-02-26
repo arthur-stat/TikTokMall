@@ -11,7 +11,6 @@ import (
 	kkerrors "github.com/cloudwego/kitex/pkg/kerrors"
 	"github.com/smartwalle/alipay/v3"
 	"math"
-	"strconv"
 	"time"
 )
 
@@ -42,7 +41,7 @@ func (s *AlipayChargeService) Run(req *payment.AlipayChargeReq) (*payment.Alipay
 	p.NotifyURL = conf.GetConf().Alipay.NotifyUrl                               // 支付宝回调
 	p.ReturnURL = req.ReturnUrl                                                 // 支付后调转页面
 	p.Subject = "tik_tok_mall"                                                  // 标题
-	p.OutTradeNo = strconv.FormatInt(req.OrderId, 10)                           // 传递一个唯一单号
+	p.OutTradeNo = req.OrderId                                                  // 传递一个唯一单号
 	p.TotalAmount = fmt.Sprintf("%.2f", math.Ceil(float64(req.Amount)*100)/100) // 金额
 	p.ProductCode = "FAST_INSTANT_TRADE_PAY"                                    // 网页支付
 	p.TimeoutExpress = "10m"                                                    // 定时取消订单的超时时间

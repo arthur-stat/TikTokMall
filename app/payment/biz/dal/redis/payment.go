@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"time"
 
 	"TikTokMall/app/payment/biz/model"
@@ -26,8 +25,8 @@ func SetPaymentCache(ctx context.Context, payment *model.Payments) error {
 }
 
 // GetPaymentCache 从 Redis 中获取支付记录
-func GetPaymentCache(ctx context.Context, orderID int64) (*model.Payments, error) {
-	key := fmt.Sprintf("payment:%d", orderID)
+func GetPaymentCache(ctx context.Context, orderId string) (*model.Payments, error) {
+	key := fmt.Sprintf("payment:%d", orderId)
 	data, err := Client.Get(ctx, key).Bytes()
 	if err == redis.Nil {
 		return nil, nil // 缓存中没有记录
@@ -41,13 +40,13 @@ func GetPaymentCache(ctx context.Context, orderID int64) (*model.Payments, error
 		return nil, fmt.Errorf("failed to unmarshal cached payment data: %v", err)
 	}
 	// 确保 OrderID 正确
-	payment.OrderID = orderID
+	payment.OrderID = orderId
 	return &payment, nil
 }
 
 // SetPayUrlToCache 将支付url缓存到 Redis，过期时间设置为 10 min
-func SetPayUrlToCache(ctx context.Context, orderId int64, payUrl string) error {
-	key := strconv.FormatInt(orderId, 10)
+func SetPayUrlToCache(ctx context.Context, orderId string, payUrl string) error {
+	key := orderId
 	data := payUrl
 	err := Client.Set(ctx, key, data, 10*time.Minute).Err()
 	if err != nil {
@@ -56,8 +55,8 @@ func SetPayUrlToCache(ctx context.Context, orderId int64, payUrl string) error {
 	return nil
 }
 
-func GetPayUrlFromCache(ctx context.Context, orderId int64) (string, error) {
-	key := strconv.FormatInt(orderId, 10)
+func GetPayUrlFromCache(ctx context.Context, orderId string) (string, error) {
+	key := orderId
 	data, err := Client.Get(ctx, key).Result()
 	if err == redis.Nil {
 		return "", nil // 缓存中没有记录

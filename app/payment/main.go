@@ -73,7 +73,12 @@ func startHTTPServer() error {
 		v1.GET("/health", handler.HealthHandler)
 		v1.POST("/charge", handler.ChargeHandler)
 		v1.POST("/refund", handler.RefundHandler)
-		v1.POST("/alipay/charge", handler.AlipayChargeHandler)
+		alipay := v1.Group("/alipay")
+		{
+			alipay.POST("/charge", handler.AlipayChargeHandler)
+			alipay.POST("/refund", handler.AlipayRefundHandler)
+			alipay.POST("/notify", handler.AlipayNotifyHandler)
+		}
 	}
 
 	// 添加 OnRun 钩子，在服务启动后注册 Consul

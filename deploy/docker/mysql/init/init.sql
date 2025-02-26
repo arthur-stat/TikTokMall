@@ -90,7 +90,7 @@ CREATE TABLE IF NOT EXISTS `order_items` (
 -- 支付服务相关表
 CREATE TABLE IF NOT EXISTS `payments` (
     `id` bigint NOT NULL AUTO_INCREMENT,
-    `order_id` bigint NOT NULL,
+    `order_id` varchar(128) NOT NULL,
     `user_id` bigint NOT NULL,
     `amount` decimal(10,2) NOT NULL,
     `status` tinyint NOT NULL DEFAULT 0, -- 0:未支付, 1:成功支付, 2:已退款

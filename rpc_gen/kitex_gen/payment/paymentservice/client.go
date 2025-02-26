@@ -14,6 +14,8 @@ type Client interface {
 	Charge(ctx context.Context, Req *payment.ChargeReq, callOptions ...callopt.Option) (r *payment.ChargeResp, err error)
 	Refund(ctx context.Context, Req *payment.RefundReq, callOptions ...callopt.Option) (r *payment.RefundResp, err error)
 	AlipayCharge(ctx context.Context, Req *payment.AlipayChargeReq, callOptions ...callopt.Option) (r *payment.AlipayChargeResp, err error)
+	AlipayRefund(ctx context.Context, Req *payment.AlipayRefundReq, callOptions ...callopt.Option) (r *payment.AlipayRefundResp, err error)
+	AlipayNotify(ctx context.Context, Req *payment.AlipayNotifyReq, callOptions ...callopt.Option) (r *payment.AlipayNotifyResp, err error)
 }
 
 // NewClient creates a client for the service defined in IDL.
@@ -58,4 +60,14 @@ func (p *kPaymentServiceClient) Refund(ctx context.Context, Req *payment.RefundR
 func (p *kPaymentServiceClient) AlipayCharge(ctx context.Context, Req *payment.AlipayChargeReq, callOptions ...callopt.Option) (r *payment.AlipayChargeResp, err error) {
 	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
 	return p.kClient.AlipayCharge(ctx, Req)
+}
+
+func (p *kPaymentServiceClient) AlipayRefund(ctx context.Context, Req *payment.AlipayRefundReq, callOptions ...callopt.Option) (r *payment.AlipayRefundResp, err error) {
+	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
+	return p.kClient.AlipayRefund(ctx, Req)
+}
+
+func (p *kPaymentServiceClient) AlipayNotify(ctx context.Context, Req *payment.AlipayNotifyReq, callOptions ...callopt.Option) (r *payment.AlipayNotifyResp, err error) {
+	ctx = client.NewCtxWithCallOptions(ctx, callOptions)
+	return p.kClient.AlipayNotify(ctx, Req)
 }

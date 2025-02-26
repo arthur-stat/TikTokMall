@@ -7,7 +7,7 @@ import (
 // Payments 模型
 type Payments struct {
 	ID            int64     `gorm:"column:id;primaryKey;autoIncrement"`
-	OrderID       int64     `gorm:"column:order_id;uniqueIndex;not null"`
+	OrderID       string    `gorm:"column:order_id;uniqueIndex;not null"`
 	UserID        int64     `gorm:"column:user_id;index;not null"`
 	Amount        float32   `gorm:"column:amount;type:decimal(10,2);not null"`
 	Status        int8      `gorm:"column:status;default:1;not null"`

@@ -15,6 +15,8 @@ type RPCClient interface {
 	Charge(ctx context.Context, Req *payment.ChargeReq, callOptions ...callopt.Option) (r *payment.ChargeResp, err error)
 	Refund(ctx context.Context, Req *payment.RefundReq, callOptions ...callopt.Option) (r *payment.RefundResp, err error)
 	AlipayCharge(ctx context.Context, Req *payment.AlipayChargeReq, callOptions ...callopt.Option) (r *payment.AlipayChargeResp, err error)
+	AlipayRefund(ctx context.Context, Req *payment.AlipayRefundReq, callOptions ...callopt.Option) (r *payment.AlipayRefundResp, err error)
+	AlipayNotify(ctx context.Context, Req *payment.AlipayNotifyReq, callOptions ...callopt.Option) (r *payment.AlipayNotifyResp, err error)
 }
 
 func NewRPCClient(dstService string, opts ...client.Option) (RPCClient, error) {
@@ -53,4 +55,12 @@ func (c *clientImpl) Refund(ctx context.Context, Req *payment.RefundReq, callOpt
 
 func (c *clientImpl) AlipayCharge(ctx context.Context, Req *payment.AlipayChargeReq, callOptions ...callopt.Option) (r *payment.AlipayChargeResp, err error) {
 	return c.kitexClient.AlipayCharge(ctx, Req, callOptions...)
+}
+
+func (c *clientImpl) AlipayRefund(ctx context.Context, Req *payment.AlipayRefundReq, callOptions ...callopt.Option) (r *payment.AlipayRefundResp, err error) {
+	return c.kitexClient.AlipayRefund(ctx, Req, callOptions...)
+}
+
+func (c *clientImpl) AlipayNotify(ctx context.Context, Req *payment.AlipayNotifyReq, callOptions ...callopt.Option) (r *payment.AlipayNotifyResp, err error) {
+	return c.kitexClient.AlipayNotify(ctx, Req, callOptions...)
 }
