@@ -1,17 +1,8 @@
 package service
 
 import (
-	"context"
 	"fmt"
-
-	"TikTokMall/app/checkout/kitex_gen/checkout"
 )
-
-// CheckoutService 定义结账服务的接口
-type CheckoutService interface {
-	// Checkout 处理结账请求
-	Run(ctx context.Context, req *checkout.CheckoutReq) (*checkout.CheckoutResp, error)
-}
 
 // 错误定义
 var (
