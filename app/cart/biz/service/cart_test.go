@@ -1,93 +1,225 @@
 package service
 
 import (
-    "context"
-    "testing"
+	"context"
+	"errors"
+	"testing"
 
-    "github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 
-    "TikTokMall/app/cart/biz/dal"
-    "TikTokMall/app/cart/kitex_gen/cart"
+	"TikTokMall/app/cart/biz/dal/mysql/mock"
+	"TikTokMall/app/cart/biz/model"
+	"TikTokMall/app/cart/kitex_gen/cart"
 )
 
-func TestMain(m *testing.M) {
-    if err := dal.Init(); err != nil {
-        panic(err)
-    }
-    m.Run()
-}
-
 func TestCartService_AddItem(t *testing.T) {
-    svc := NewCartService()
-    ctx := context.Background()
+	repo := new(mock.MockCartRepository)
+	svc := NewCartServiceWithRepo(repo)
 
-    req := &cart.AddItemReq{
-        UserId: 1,
-        Item: &cart.CartItem{
-            ProductId: 1,
-            Quantity: 2,
-        },
-    }
-    err := svc.AddItem(ctx, req)
-    assert.NoError(t, err)
+	tests := []struct {
+		name    string
+		req     *cart.AddItemReq
+		mockFn  func()
+		wantErr bool
+	}{
+		{
+			name: "valid item",
+			req: &cart.AddItemReq{
+				UserId: 1,
+				Item: &cart.CartItem{
+					ProductId: 101,
+					Quantity:  2,
+				},
+			},
+			mockFn: func() {
+				repo.On("AddItem", mock.Anything, uint32(1), mock.AnythingOfType("*model.CartItem")).Return(nil)
+			},
+			wantErr: false,
+		},
+		{
+			name: "zero quantity",
+			req: &cart.AddItemReq{
+				UserId: 1,
+				Item: &cart.CartItem{
+					ProductId: 101,
+					Quantity:  0,
+				},
+			},
+			mockFn:  func() {},
+			wantErr: true,
+		},
+		{
+			name: "repository error",
+			req: &cart.AddItemReq{
+				UserId: 1,
+				Item: &cart.CartItem{
+					ProductId: 101,
+					Quantity:  2,
+				},
+			},
+			mockFn: func() {
+				repo.On("AddItem", mock.Anything, uint32(1), mock.AnythingOfType("*model.CartItem")).Return(errors.New("db error"))
+			},
+			wantErr: true,
+		},
+	}
 
-    result, err := svc.GetCart(ctx, 1)
-    assert.NoError(t, err)
-    assert.Equal(t, uint32(1), result.UserId)
-    assert.Len(t, result.Items, 1)
-    assert.Equal(t, uint32(1), result.Items[0].ProductId)
-    assert.Equal(t, int32(2), result.Items[0].Quantity)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// 重置 mock
+			repo.ExpectedCalls = nil
+
+			tt.mockFn()
+
+			resp, err := svc.AddItem(context.Background(), tt.req)
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.NotNil(t, resp)
+			repo.AssertExpectations(t)
+		})
+	}
 }
 
 func TestCartService_GetCart(t *testing.T) {
-    svc := NewCartService()
-    ctx := context.Background()
+	repo := new(mock.MockCartRepository)
+	svc := NewCartServiceWithRepo(repo)
 
-    req1 := &cart.AddItemReq{
-        UserId: 2,
-        Item: &cart.CartItem{
-            ProductId: 1,
-            Quantity: 1,
-        },
-    }
-    err := svc.AddItem(ctx, req1)
-    assert.NoError(t, err)
+	tests := []struct {
+		name     string
+		req      *cart.GetCartReq
+		mockFn   func()
+		wantResp *cart.GetCartResp
+		wantErr  bool
+	}{
+		{
+			name: "with items",
+			req: &cart.GetCartReq{
+				UserId: 1,
+			},
+			mockFn: func() {
+				repo.On("GetItems", mock.Anything, uint32(1)).Return([]*model.CartItem{
+					{
+						ProductID: 101,
+						Quantity:  2,
+						Selected:  true,
+					},
+				}, nil)
+			},
+			wantResp: &cart.GetCartResp{
+				Cart: &cart.Cart{
+					UserId: 1,
+					Items: []*cart.CartItem{
+						{
+							ProductId: 101,
+							Quantity:  2,
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "empty cart",
+			req: &cart.GetCartReq{
+				UserId: 1,
+			},
+			mockFn: func() {
+				repo.On("GetItems", mock.Anything, uint32(1)).Return([]*model.CartItem{}, nil)
+			},
+			wantResp: &cart.GetCartResp{
+				Cart: &cart.Cart{
+					UserId: 1,
+					Items:  []*cart.CartItem{},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "repository error",
+			req: &cart.GetCartReq{
+				UserId: 1,
+			},
+			mockFn: func() {
+				repo.On("GetItems", mock.Anything, uint32(1)).Return(nil, errors.New("db error"))
+			},
+			wantResp: nil,
+			wantErr:  true,
+		},
+	}
 
-    req2 := &cart.AddItemReq{
-        UserId: 2,
-        Item: &cart.CartItem{
-            ProductId: 2,
-            Quantity: 2,
-        },
-    }
-    err = svc.AddItem(ctx, req2)
-    assert.NoError(t, err)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// 重置 mock
+			repo.ExpectedCalls = nil
 
-    result, err := svc.GetCart(ctx, 2)
-    assert.NoError(t, err)
-    assert.Equal(t, uint32(2), result.UserId)
-    assert.Len(t, result.Items, 2)
+			tt.mockFn()
+
+			resp, err := svc.GetCart(context.Background(), tt.req)
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, tt.wantResp, resp)
+			repo.AssertExpectations(t)
+		})
+	}
 }
 
 func TestCartService_EmptyCart(t *testing.T) {
-    svc := NewCartService()
-    ctx := context.Background()
+	repo := new(mock.MockCartRepository)
+	svc := NewCartServiceWithRepo(repo)
 
-    req := &cart.AddItemReq{
-        UserId: 5,
-        Item: &cart.CartItem{
-            ProductId: 1,
-            Quantity: 1,
-        },
-    }
-    err := svc.AddItem(ctx, req)
-    assert.NoError(t, err)
+	tests := []struct {
+		name    string
+		req     *cart.EmptyCartReq
+		mockFn  func()
+		wantErr bool
+	}{
+		{
+			name: "success",
+			req: &cart.EmptyCartReq{
+				UserId: 1,
+			},
+			mockFn: func() {
+				repo.On("EmptyCart", mock.Anything, uint32(1)).Return(nil)
+			},
+			wantErr: false,
+		},
+		{
+			name: "repository error",
+			req: &cart.EmptyCartReq{
+				UserId: 1,
+			},
+			mockFn: func() {
+				repo.On("EmptyCart", mock.Anything, uint32(1)).Return(errors.New("db error"))
+			},
+			wantErr: true,
+		},
+	}
 
-    err = svc.EmptyCart(ctx, 5)
-    assert.NoError(t, err)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// 重置 mock
+			repo.ExpectedCalls = nil
 
-    result, err := svc.GetCart(ctx, 5)
-    assert.NoError(t, err)
-    assert.Equal(t, uint32(5), result.UserId)
-    assert.Len(t, result.Items, 0)
+			tt.mockFn()
+
+			resp, err := svc.EmptyCart(context.Background(), tt.req)
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.NotNil(t, resp)
+			repo.AssertExpectations(t)
+		})
+	}
 }
