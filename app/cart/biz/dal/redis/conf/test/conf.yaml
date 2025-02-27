@@ -1,0 +1,45 @@
+env: "test"
+
+service:
+  name: "cart"
+  port: 8080
+  log_level: "info"
+
+mysql:
+  host: "localhost"
+  port: 3306
+  user: "root"
+  password: "root"
+  database: "tiktok_mall_test"
+  max_idle_conns: 10
+  max_open_conns: 100
+
+redis:
+  host: "localhost"
+  port: 6379
+  username: ""
+  password: ""
+  db: 0
+
+registry:
+  registry_address:
+    - "localhost:8500"
+  username: ""
+  password: ""
+
+log:
+  level: "info"
+  file: "log/cart.log"
+  max_size: 100
+  max_backups: 5
+  max_age: 7
+
+jaeger:
+  host: "localhost"
+  port: 6831
+  sampler_type: "const"
+  sampler_param: 1
+  log_spans: true
+
+prometheus:
+  port: 9090 

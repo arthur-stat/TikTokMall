@@ -8,13 +8,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	"TikTokMall/app/cart/biz/dal/mysql/mock"
+	mockRepo "TikTokMall/app/cart/biz/dal/mysql/mock"
 	"TikTokMall/app/cart/biz/model"
 	"TikTokMall/app/cart/kitex_gen/cart"
 )
 
 func TestCartService_AddItem(t *testing.T) {
-	repo := new(mock.MockCartRepository)
+	repo := new(mockRepo.MockCartRepository)
 	svc := NewCartServiceWithRepo(repo)
 
 	tests := []struct {
@@ -86,7 +86,7 @@ func TestCartService_AddItem(t *testing.T) {
 }
 
 func TestCartService_GetCart(t *testing.T) {
-	repo := new(mock.MockCartRepository)
+	repo := new(mockRepo.MockCartRepository)
 	svc := NewCartServiceWithRepo(repo)
 
 	tests := []struct {
@@ -173,7 +173,7 @@ func TestCartService_GetCart(t *testing.T) {
 }
 
 func TestCartService_EmptyCart(t *testing.T) {
-	repo := new(mock.MockCartRepository)
+	repo := new(mockRepo.MockCartRepository)
 	svc := NewCartServiceWithRepo(repo)
 
 	tests := []struct {

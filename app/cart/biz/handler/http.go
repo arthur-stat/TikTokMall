@@ -6,16 +6,17 @@ import (
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
 
+	"TikTokMall/app/cart/biz/service"
 	"TikTokMall/app/cart/kitex_gen/cart"
 )
 
 type CartHTTPHandler struct {
-	svc *CartServiceImpl
+	Svc service.CartService
 }
 
 func NewCartHTTPHandler() *CartHTTPHandler {
 	return &CartHTTPHandler{
-		svc: NewCartServiceImpl(),
+		Svc: service.NewCartService(),
 	}
 }
 
@@ -29,9 +30,13 @@ func (h *CartHTTPHandler) AddItem(c context.Context, ctx *app.RequestContext) {
 		return
 	}
 
-	resp, err := h.svc.AddItem(c, &req)
+	resp, err := h.Svc.AddItem(c, &req)
 	if err != nil {
-		ctx.JSON(consts.StatusInternalServerError, map[string]interface{}{
+		statusCode := consts.StatusInternalServerError
+		if err == service.ErrInvalidQuantity {
+			statusCode = consts.StatusBadRequest
+		}
+		ctx.JSON(statusCode, map[string]interface{}{
 			"error": err.Error(),
 		})
 		return
@@ -40,7 +45,7 @@ func (h *CartHTTPHandler) AddItem(c context.Context, ctx *app.RequestContext) {
 	ctx.JSON(consts.StatusOK, resp)
 }
 
-// GetCart handles HTTP request for getting cart items
+// GetCart handles HTTP request for getting cart
 func (h *CartHTTPHandler) GetCart(c context.Context, ctx *app.RequestContext) {
 	var req cart.GetCartReq
 	if err := ctx.BindAndValidate(&req); err != nil {
@@ -50,7 +55,7 @@ func (h *CartHTTPHandler) GetCart(c context.Context, ctx *app.RequestContext) {
 		return
 	}
 
-	resp, err := h.svc.GetCart(c, &req)
+	resp, err := h.Svc.GetCart(c, &req)
 	if err != nil {
 		ctx.JSON(consts.StatusInternalServerError, map[string]interface{}{
 			"error": err.Error(),
@@ -71,7 +76,7 @@ func (h *CartHTTPHandler) EmptyCart(c context.Context, ctx *app.RequestContext) 
 		return
 	}
 
-	resp, err := h.svc.EmptyCart(c, &req)
+	resp, err := h.Svc.EmptyCart(c, &req)
 	if err != nil {
 		ctx.JSON(consts.StatusInternalServerError, map[string]interface{}{
 			"error": err.Error(),

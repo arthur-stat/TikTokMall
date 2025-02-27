@@ -41,6 +41,11 @@ func CacheCart(ctx context.Context, userID uint32, items []*model.CartItem) erro
 	return RDB.Set(ctx, key, string(data), cartExpiration).Err()
 }
 
+// UpdateCartCache 更新购物车缓存
+func UpdateCartCache(ctx context.Context, userID uint32, items []*model.CartItem) error {
+	return CacheCart(ctx, userID, items)
+}
+
 // InvalidateCartCache 使购物车缓存失效
 func InvalidateCartCache(ctx context.Context, userID uint32) error {
 	key := fmt.Sprintf("%s%d", cartKeyPrefix, userID)

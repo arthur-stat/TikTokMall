@@ -2,25 +2,36 @@ package mysql
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"gorm.io/driver/mysql"
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
-
-	"TikTokMall/app/cart/conf"
 )
 
 var DB *gorm.DB
 
 // Init 初始化 MySQL 连接
 func Init() error {
-	config := conf.GetConfig()
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
-		config.MySQL.User,
-		config.MySQL.Password,
-		config.MySQL.Host,
-		config.MySQL.Port,
-		config.MySQL.Database,
+	// 检查是否在测试环境中
+	if os.Getenv("GO_ENV") == "test" || os.Getenv("TESTING") == "1" {
+		// 在测试环境中使用内存数据库
+		db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+		if err != nil {
+			return fmt.Errorf("无法创建测试数据库: %w", err)
+		}
+		DB = db
+		return nil
+	}
+
+	// 实际环境连接字符串
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		getEnvOrDefault("MYSQL_USER", "root"),
+		getEnvOrDefault("MYSQL_PASSWORD", "root"),
+		getEnvOrDefault("MYSQL_HOST", "localhost"),
+		getEnvOrDefault("MYSQL_PORT", "3306"),
+		getEnvOrDefault("MYSQL_DATABASE", "tiktok_mall"),
 	)
 
 	var err error
@@ -46,4 +57,12 @@ func Init() error {
 	}
 
 	return nil
+}
+
+// getEnvOrDefault 获取环境变量，如果不存在则返回默认值
+func getEnvOrDefault(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
 }

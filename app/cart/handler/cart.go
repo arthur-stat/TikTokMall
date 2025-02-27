@@ -1,49 +1,35 @@
 package handler
 
 import (
-    "context"
+	"context"
 
-    "TikTokMall/app/cart/biz/service"
-    "TikTokMall/app/cart/kitex_gen/cart"
+	"TikTokMall/app/cart/biz/service"
+	"TikTokMall/app/cart/kitex_gen/cart"
 )
 
-// CartServiceImpl implements the cart service interface
+// CartServiceImpl 实现 cart.thrift 中定义的服务接口
 type CartServiceImpl struct {
-    svc *service.CartService
+	svc service.CartService
 }
 
-// NewCartServiceImpl creates a new cart service implementation
+// NewCartServiceImpl 创建一个新的 CartServiceImpl
 func NewCartServiceImpl() *CartServiceImpl {
-    return &CartServiceImpl{
-        svc: service.NewCartService(),
-    }
+	return &CartServiceImpl{
+		svc: service.NewCartService(),
+	}
 }
 
-// AddItem adds an item to the cart
+// AddItem 实现 CartServiceImpl 接口
 func (s *CartServiceImpl) AddItem(ctx context.Context, req *cart.AddItemReq) (resp *cart.AddItemResp, err error) {
-    err = s.svc.AddItem(ctx, req)
-    if err != nil {
-        return &cart.AddItemResp{}, err
-    }
-    return &cart.AddItemResp{}, nil
+	return s.svc.AddItem(ctx, req)
 }
 
-// GetCart retrieves all items in the cart
+// GetCart 实现 CartServiceImpl 接口
 func (s *CartServiceImpl) GetCart(ctx context.Context, req *cart.GetCartReq) (resp *cart.GetCartResp, err error) {
-    result, err := s.svc.GetCart(ctx, req.UserId)
-    if err != nil {
-        return &cart.GetCartResp{}, err
-    }
-    return &cart.GetCartResp{
-        Cart: result,
-    }, nil
+	return s.svc.GetCart(ctx, req)
 }
 
-// EmptyCart removes all items from the cart
+// EmptyCart 实现 CartServiceImpl 接口
 func (s *CartServiceImpl) EmptyCart(ctx context.Context, req *cart.EmptyCartReq) (resp *cart.EmptyCartResp, err error) {
-    err = s.svc.EmptyCart(ctx, req.UserId)
-    if err != nil {
-        return &cart.EmptyCartResp{}, err
-    }
-    return &cart.EmptyCartResp{}, nil
+	return s.svc.EmptyCart(ctx, req)
 }

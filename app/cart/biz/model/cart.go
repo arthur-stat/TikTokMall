@@ -6,7 +6,7 @@ import (
 
 // CartItem 购物车项
 type CartItem struct {
-	ID        int64     `gorm:"primaryKey;autoIncrement"`
+	ID        uint32    `gorm:"primaryKey;autoIncrement"`
 	UserID    uint32    `gorm:"not null;index"`
 	ProductID uint32    `gorm:"not null"`
 	Quantity  uint32    `gorm:"not null;default:1"`
