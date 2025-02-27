@@ -15,8 +15,12 @@ type CartHTTPHandler struct {
 }
 
 func NewCartHTTPHandler() *CartHTTPHandler {
+	// 使用具有实际数据库实现的服务
+	repo := service.NewCartRepository()
+	svc := service.NewCartServiceWithRepo(repo)
+
 	return &CartHTTPHandler{
-		Svc: service.NewCartService(),
+		Svc: svc,
 	}
 }
 

@@ -16,7 +16,7 @@ var DB *gorm.DB
 func Init() error {
 	// 检查是否在测试环境中
 	if os.Getenv("GO_ENV") == "test" || os.Getenv("TESTING") == "1" {
-		// 在测试环境中使用内存数据库
+		// 在测试环境中使用 SQLite 内存数据库
 		db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 		if err != nil {
 			return fmt.Errorf("无法创建测试数据库: %w", err)
@@ -25,7 +25,7 @@ func Init() error {
 		return nil
 	}
 
-	// 实际环境连接字符串
+	// 使用真实 MySQL 数据库连接
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
 		getEnvOrDefault("MYSQL_USER", "root"),
 		getEnvOrDefault("MYSQL_PASSWORD", "root"),
@@ -34,14 +34,15 @@ func Init() error {
 		getEnvOrDefault("MYSQL_DATABASE", "tiktok_mall"),
 	)
 
-	var err error
-	DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
 		PrepareStmt:            true,
 		SkipDefaultTransaction: true,
 	})
 	if err != nil {
 		return fmt.Errorf("连接数据库失败: %w", err)
 	}
+
+	DB = db
 
 	sqlDB, err := DB.DB()
 	if err != nil {
@@ -65,4 +66,18 @@ func getEnvOrDefault(key, defaultValue string) string {
 		return value
 	}
 	return defaultValue
+}
+
+// InitTestDB 初始化测试数据库连接（使用SQLite内存数据库）
+func InitTestDB() error {
+	// 使用 SQLite 内存数据库
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	if err != nil {
+		return fmt.Errorf("无法创建测试数据库: %w", err)
+	}
+
+	// 将全局DB设置为测试数据库
+	DB = db
+
+	return nil
 }

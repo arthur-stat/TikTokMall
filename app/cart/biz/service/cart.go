@@ -22,9 +22,12 @@ type CartService interface {
 
 type cartService struct{}
 
-// NewCartService creates a new cart service instance
+// NewCartService 创建购物车服务实例
 func NewCartService() CartService {
-	return &cartService{}
+	repo := NewCartRepository()
+	return &cartServiceImpl{
+		repo: repo,
+	}
 }
 
 // AddItem adds an item to the user's cart

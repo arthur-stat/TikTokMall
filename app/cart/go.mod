@@ -10,7 +10,6 @@ require (
 	github.com/cloudwego/kitex v0.12.1
 	github.com/golang/mock v1.6.0
 	github.com/hashicorp/consul/api v1.28.2
-	github.com/hertz-contrib/cors v0.1.0
 	github.com/hertz-contrib/registry/consul v0.0.0-20250120124521-8751bc5be5c3
 	github.com/kr/pretty v0.3.1
 	github.com/opentracing/opentracing-go v1.2.0
