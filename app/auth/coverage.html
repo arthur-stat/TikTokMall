@@ -111,9 +111,7 @@
 				
 				<option value="file27">TikTokMall/app/auth/pkg/hertz/registry.go (0.0%)</option>
 				
-				<option value="file28">TikTokMall/app/auth/pkg/prometheus/timer.go (0.0%)</option>
-				
-				<option value="file29">TikTokMall/app/auth/pkg/tracer/init.go (0.0%)</option>
+				<option value="file28">TikTokMall/app/auth/pkg/tracer/init.go (0.0%)</option>
 				
 				</select>
 			</div>
@@ -6517,6 +6515,7 @@ func main() <span class="cov0" title="0">{
         _ = tracer // 暂时不使用 tracer
 
         // 注释掉这段代码
+        // TODO: 存在版本兼容问题
         /*
                 // 3. 初始化Prometheus
                 go func() {
@@ -6653,35 +6652,7 @@ func NewConsulRegister(addr string) (registry.Registry, error) <span class="cov0
 }
 </pre>
 		
-		<pre class="file" id="file28" style="display: none">package prometheus
-
-import (
-        "time"
-
-        "github.com/prometheus/client_golang/prometheus"
-)
-
-type Timer struct {
-        observer prometheus.Observer
-        start    float64
-}
-
-func NewTimer(o prometheus.Observer) *Timer <span class="cov0" title="0">{
-        return &amp;Timer{
-                observer: o,
-                start:    float64(time.Now().UnixNano()) / 1e9,
-        }
-}</span>
-
-func (t *Timer) ObserveDuration() <span class="cov0" title="0">{
-        if t.observer == nil </span><span class="cov0" title="0">{
-                return
-        }</span>
-        <span class="cov0" title="0">t.observer.Observe(float64(time.Now().UnixNano())/1e9 - t.start)</span>
-}
-</pre>
-		
-		<pre class="file" id="file29" style="display: none">package tracer
+		<pre class="file" id="file28" style="display: none">package tracer
 
 import (
         "fmt"

@@ -114,8 +114,9 @@ message ValidateTokenResponse {
 
 // Token验证返回数据
 message ValidateTokenData {
-    int64 user_id = 1;
-    string username = 2;
+    bool valid = 1;
+    int64 user_id = 2;
+    string username = 3;
 }
 
 // Auth服务接口定义

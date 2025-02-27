@@ -13,6 +13,9 @@ import (
 
 	"TikTokMall/app/auth/biz/dal/mysql"
 	"TikTokMall/app/auth/biz/dal/redis"
+	"TikTokMall/app/auth/kitex_gen/auth"
+
+	"github.com/cloudwego/hertz/pkg/protocol/consts"
 )
 
 const (
@@ -29,12 +32,14 @@ const (
 	UserStatusBanned = 2 // 禁用
 )
 
-// AuthService 认证服务
-type AuthService struct{}
+type authService struct {
+	repo AuthRepository
+}
 
-// NewAuthService 创建认证服务实例
-func NewAuthService() *AuthService {
-	return &AuthService{}
+func NewAuthService(repo AuthRepository) AuthService {
+	return &authService{
+		repo: repo,
+	}
 }
 
 // generateToken 生成随机令牌
@@ -61,26 +66,32 @@ func comparePassword(hashedPassword, password string) error {
 }
 
 // validateLoginRetries 验证登录重试次数
-func (s *AuthService) validateLoginRetries(ctx context.Context, username string, isValidPassword bool) error {
+func (s *authService) validateLoginRetries(ctx context.Context, username string, isValidPassword bool) error {
 	// 如果密码正确，跳过重试次数验证
 	if isValidPassword {
+		// 重置重试计数
+		if err := redis.ResetLoginRetry(ctx, username); err != nil {
+			hlog.CtxWarnf(ctx, "reset login retry count failed: %v", err)
+		}
 		return nil
 	}
 
-	count, err := redis.GetLoginRetryCount(ctx, username)
+	// 增加重试计数
+	count, err := redis.IncrLoginRetry(ctx, username)
 	if err != nil {
-		return errors.Wrap(err, "get login retry count failed")
+		return errors.Wrap(err, "increment login retry count failed")
 	}
 
+	// 检查是否超过重试限制
 	if count >= MaxLoginRetries {
-		return errors.New("too many login attempts, please try again later")
+		return errors.New("too many login attempts")
 	}
 
-	return nil
+	return errors.New("invalid username or password")
 }
 
 // createAndCacheTokens 创建并缓存令牌
-func (s *AuthService) createAndCacheTokens(ctx context.Context, userID int64) (token, refreshToken string, err error) {
+func (s *authService) createAndCacheTokens(ctx context.Context, userID int64) (token, refreshToken string, err error) {
 	// 生成访问令牌
 	token, err = generateToken()
 	if err != nil {
@@ -101,7 +112,7 @@ func (s *AuthService) createAndCacheTokens(ctx context.Context, userID int64) (t
 		ExpiredAt:    time.Now().Add(TokenExpiration),
 	}
 
-	if err := mysql.CreateToken(tokenRecord); err != nil {
+	if err := s.repo.CreateToken(tokenRecord); err != nil {
 		return "", "", errors.Wrap(err, "create token record failed")
 	}
 
@@ -114,7 +125,7 @@ func (s *AuthService) createAndCacheTokens(ctx context.Context, userID int64) (t
 }
 
 // invalidateTokens 使令牌失效
-func (s *AuthService) invalidateTokens(ctx context.Context, token string) error {
+func (s *authService) invalidateTokens(ctx context.Context, token string) error {
 	// 从数据库删除令牌
 	if err := mysql.DeleteToken(token); err != nil {
 		return errors.Wrap(err, "delete token from database failed")
@@ -133,204 +144,215 @@ func (s *AuthService) invalidateTokens(ctx context.Context, token string) error 
 	return nil
 }
 
-// Register 用户注册
-func (s *AuthService) Register(ctx context.Context, username, password, email, phone string) (int64, string, error) {
+// Register 实现注册功能
+func (s *authService) Register(ctx context.Context, req *auth.RegisterRequest) (*auth.RegisterResponse, error) {
 	// 检查用户名是否已存在
-	exists, err := mysql.CheckUserExists(username)
-	if err != nil {
-		return 0, "", errors.Wrap(err, "check username exists failed")
+	exists, err := s.repo.GetUserByUsername(req.Username)
+	if err != nil && err != mysql.ErrRecordNotFound {
+		return nil, err
 	}
-	if exists {
-		return 0, "", errors.New("username already exists")
-	}
-
-	// 检查邮箱是否已被使用
-	if email != "" {
-		exists, err = mysql.CheckEmailExists(email)
-		if err != nil {
-			return 0, "", errors.Wrap(err, "check email exists failed")
-		}
-		if exists {
-			return 0, "", errors.New("email already exists")
-		}
-	}
-
-	// 检查手机号是否已被使用
-	if phone != "" {
-		exists, err = mysql.CheckPhoneExists(phone)
-		if err != nil {
-			return 0, "", errors.Wrap(err, "check phone exists failed")
-		}
-		if exists {
-			return 0, "", errors.New("phone already exists")
-		}
-	}
-
-	// 密码加密
-	hashedPassword, err := hashPassword(password)
-	if err != nil {
-		return 0, "", err
+	if exists != nil {
+		return nil, errors.New("username already exists")
 	}
 
 	// 创建用户
+	hashedPassword, err := hashPassword(req.Password)
+	if err != nil {
+		return nil, err
+	}
+
 	user := &mysql.User{
-		Username: username,
+		Username: req.Username,
 		Password: hashedPassword,
-		Email:    email,
-		Phone:    phone,
+		Email:    req.Email,
+		Phone:    req.Phone,
 		Status:   UserStatusNormal,
 	}
 
-	if err := mysql.CreateUser(user); err != nil {
-		return 0, "", errors.Wrap(err, "create user failed")
+	if err := s.repo.CreateUser(user); err != nil {
+		return nil, err
 	}
 
-	// 生成访问令牌
-	token, _, err := s.createAndCacheTokens(ctx, user.ID)
+	// 生成令牌
+	token, err := generateToken()
 	if err != nil {
-		return 0, "", err
+		return nil, err
 	}
 
-	return user.ID, token, nil
+	// 创建令牌记录
+	tokenRecord := &mysql.Token{
+		UserID:    user.ID,
+		Token:     token,
+		ExpiredAt: time.Now().Add(TokenExpiration),
+	}
+
+	if err := s.repo.CreateToken(tokenRecord); err != nil {
+		return nil, err
+	}
+
+	return &auth.RegisterResponse{
+		Base: &auth.BaseResp{
+			Code:    0,
+			Message: "success",
+		},
+		Data: &auth.RegisterData{
+			UserId: user.ID,
+			Token:  token,
+		},
+	}, nil
 }
 
-// Login 用户登录
-func (s *AuthService) Login(ctx context.Context, username, password string) (string, string, error) {
-	// 获取用户信息
-	user, err := mysql.GetUserByUsername(username)
+// Login 实现登录功能
+func (s *authService) Login(ctx context.Context, req *auth.LoginRequest) (*auth.LoginResponse, error) {
+	user, err := s.repo.GetUserByUsername(req.Username)
 	if err != nil {
-		return "", "", errors.Wrap(err, "get user failed")
-	}
-	if user == nil {
-		// 增加登录重试次数
-		if _, err := redis.IncrLoginRetry(ctx, username); err != nil {
-			hlog.CtxWarnf(ctx, "increment login retry count failed: %v", err)
-		}
-		return "", "", errors.New("invalid username or password")
+		return nil, err
 	}
 
-	// 检查用户状态
-	if user.Status != UserStatusNormal {
-		return "", "", errors.New("user is disabled")
+	if user.Status == UserStatusBanned {
+		return nil, errors.New("user is banned")
 	}
 
-	// 验证密码
-	isValidPassword := comparePassword(user.Password, password) == nil
+	// 先验证密码
+	isValidPassword := comparePassword(user.Password, req.Password) == nil
 
-	// 验证登录重试次数
-	if err := s.validateLoginRetries(ctx, username, isValidPassword); err != nil {
-		return "", "", err
+	// 然后检查重试次数
+	if err := s.validateLoginRetries(ctx, req.Username, isValidPassword); err != nil {
+		return nil, err
 	}
 
-	if !isValidPassword {
-		// 增加登录重试次数
-		if _, err := redis.IncrLoginRetry(ctx, username); err != nil {
-			hlog.CtxWarnf(ctx, "increment login retry count failed: %v", err)
-		}
-		return "", "", errors.New("invalid username or password")
-	}
-
-	// 重置登录重试次数
-	if err := redis.ResetLoginRetry(ctx, username); err != nil {
-		hlog.CtxWarnf(ctx, "reset login retry count failed: %v", err)
-	}
-
-	// 生成新的访问令牌和刷新令牌
+	// 如果密码验证通过，创建令牌
 	token, refreshToken, err := s.createAndCacheTokens(ctx, user.ID)
 	if err != nil {
-		return "", "", err
+		return nil, err
 	}
 
-	return token, refreshToken, nil
+	return &auth.LoginResponse{
+		Base: &auth.BaseResp{
+			Code:    0,
+			Message: "success",
+		},
+		Data: &auth.LoginData{
+			Token:        token,
+			RefreshToken: refreshToken,
+		},
+	}, nil
 }
 
-// RefreshToken 刷新访问令牌
-func (s *AuthService) RefreshToken(ctx context.Context, refreshToken string) (string, string, error) {
-	// 获取刷新令牌记录
-	tokenRecord, err := mysql.GetTokenByRefreshToken(refreshToken)
+// RefreshToken 实现刷新令牌功能
+func (s *authService) RefreshToken(ctx context.Context, req *auth.RefreshTokenRequest) (*auth.RefreshTokenResponse, error) {
+	// 获取令牌记录
+	token, err := s.repo.GetTokenByToken(req.RefreshToken)
 	if err != nil {
-		return "", "", errors.Wrap(err, "get token record failed")
-	}
-	if tokenRecord == nil {
-		return "", "", errors.New("invalid refresh token")
+		if err == mysql.ErrRecordNotFound {
+			return nil, auth.ErrInvalidToken
+		}
+		return nil, err
 	}
 
 	// 检查令牌是否过期
-	if tokenRecord.ExpiredAt.Before(time.Now()) {
-		return "", "", errors.New("refresh token expired")
-	}
-
-	// 使旧令牌失效
-	if err := s.invalidateTokens(ctx, tokenRecord.Token); err != nil {
-		hlog.CtxWarnf(ctx, "invalidate old tokens failed: %v", err)
-	}
-
-	// 生成新的访问令牌和刷新令牌
-	token, newRefreshToken, err := s.createAndCacheTokens(ctx, tokenRecord.UserID)
-	if err != nil {
-		return "", "", err
-	}
-
-	return token, newRefreshToken, nil
-}
-
-// Logout 用户登出
-func (s *AuthService) Logout(ctx context.Context, token string) error {
-	return s.invalidateTokens(ctx, token)
-}
-
-// ValidateToken 验证访问令牌
-func (s *AuthService) ValidateToken(ctx context.Context, token string) (int64, string, error) {
-	// 检查令牌是否在黑名单中
-	inBlacklist, err := redis.IsInBlacklist(ctx, token)
-	if err != nil {
-		hlog.CtxWarnf(ctx, "check token blacklist failed: %v", err)
-	}
-	if inBlacklist {
-		return 0, "", errors.New("token is invalid")
-	}
-
-	// 从缓存获取用户ID
-	userID, err := redis.GetCachedUserID(ctx, token)
-	if err == nil {
-		// 从缓存获取成功，验证用户信息
-		user, err := mysql.GetUserByID(userID)
-		if err != nil {
-			return 0, "", errors.Wrap(err, "get user failed")
-		}
-		if user == nil || user.Status != UserStatusNormal {
-			return 0, "", errors.New("user not found or disabled")
-		}
-		return user.ID, user.Username, nil
-	}
-
-	// 缓存未命中，从数据库查询
-	tokenRecord, err := mysql.GetTokenByToken(token)
-	if err != nil {
-		return 0, "", errors.Wrap(err, "get token record failed")
-	}
-	if tokenRecord == nil {
-		return 0, "", errors.New("token not found")
-	}
-
-	// 检查令牌是否过期
-	if tokenRecord.ExpiredAt.Before(time.Now()) {
-		return 0, "", errors.New("token expired")
+	if token.ExpiredAt.Before(time.Now()) {
+		return nil, auth.ErrTokenExpired
 	}
 
 	// 获取用户信息
-	user, err := mysql.GetUserByID(tokenRecord.UserID)
+	user, err := s.repo.GetUserByID(token.UserID)
 	if err != nil {
-		return 0, "", errors.Wrap(err, "get user failed")
-	}
-	if user == nil || user.Status != UserStatusNormal {
-		return 0, "", errors.New("user not found or disabled")
+		return nil, err
 	}
 
-	// 更新缓存
-	if err := redis.CacheToken(ctx, token, user.ID, time.Until(tokenRecord.ExpiredAt)); err != nil {
-		hlog.CtxWarnf(ctx, "cache token failed: %v", err)
+	// 生成新的令牌
+	newToken, newRefreshToken, err := s.createAndCacheTokens(ctx, user.ID)
+	if err != nil {
+		return nil, err
 	}
 
-	return user.ID, user.Username, nil
+	return &auth.RefreshTokenResponse{
+		Base: &auth.BaseResp{
+			Code:    0,
+			Message: "success",
+		},
+		Data: &auth.RefreshTokenData{
+			Token:        newToken,
+			RefreshToken: newRefreshToken,
+		},
+	}, nil
+}
+
+// ValidateToken 实现验证令牌功能
+func (s *authService) ValidateToken(ctx context.Context, req *auth.ValidateTokenRequest) (*auth.ValidateTokenResponse, error) {
+	// 获取令牌记录
+	token, err := s.repo.GetTokenByToken(req.Token)
+	if err != nil {
+		if err == mysql.ErrRecordNotFound {
+			return &auth.ValidateTokenResponse{
+				Base: &auth.BaseResp{
+					Code:    int32(consts.StatusUnauthorized),
+					Message: "invalid token",
+				},
+			}, auth.ErrInvalidToken
+		}
+		return nil, err
+	}
+
+	// 检查令牌是否过期
+	if token.ExpiredAt.Before(time.Now()) {
+		return &auth.ValidateTokenResponse{
+			Base: &auth.BaseResp{
+				Code:    int32(consts.StatusUnauthorized),
+				Message: "token expired",
+			},
+		}, auth.ErrTokenExpired
+	}
+
+	// 获取用户信息
+	user, err := s.repo.GetUserByID(token.UserID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &auth.ValidateTokenResponse{
+		Base: &auth.BaseResp{
+			Code:    int32(consts.StatusOK),
+			Message: "success",
+		},
+		Data: &auth.ValidateTokenData{
+			UserId:   user.ID,
+			Username: user.Username,
+		},
+	}, nil
+}
+
+// Logout 实现登出功能
+func (s *authService) Logout(ctx context.Context, req *auth.LogoutRequest) (*auth.LogoutResponse, error) {
+	// 获取令牌记录
+	_, err := s.repo.GetTokenByToken(req.Token)
+	if err != nil {
+		if err == mysql.ErrRecordNotFound {
+			return &auth.LogoutResponse{
+				Base: &auth.BaseResp{
+					Code:    int32(consts.StatusUnauthorized),
+					Message: "invalid token",
+				},
+			}, auth.ErrInvalidToken
+		}
+		return nil, err
+	}
+
+	// 删除令牌
+	if err := s.repo.DeleteToken(req.Token); err != nil {
+		return nil, err
+	}
+
+	// 将令牌加入黑名单
+	if err := redis.AddToBlacklist(ctx, req.Token, TokenExpiration); err != nil {
+		hlog.CtxWarnf(ctx, "add token to blacklist failed: %v", err)
+	}
+
+	return &auth.LogoutResponse{
+		Base: &auth.BaseResp{
+			Code:    int32(consts.StatusOK),
+			Message: "success",
+		},
+	}, nil
 }

@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"time"
+
+	"github.com/go-redis/redis/v8"
 )
 
 const (
@@ -12,30 +14,30 @@ const (
 )
 
 // GetLoginRetryCount 获取登录重试次数
-func GetLoginRetryCount(ctx context.Context, username string) (int64, error) {
+func GetLoginRetryCount(ctx context.Context, username string) (int, error) {
+	if Client == nil {
+		return 0, nil
+	}
 	key := fmt.Sprintf("%s%s", loginRetryKeyPrefix, username)
-	count, err := RDB.Get(ctx, key).Int64()
-	if err != nil && err.Error() == "redis: nil" {
+	count, err := RDB.Get(ctx, key).Int()
+	if err == redis.Nil {
 		return 0, nil
 	}
 	return count, err
 }
 
 // IncrLoginRetry 增加登录重试次数
-func IncrLoginRetry(ctx context.Context, username string) (int64, error) {
-	key := fmt.Sprintf("%s%s", loginRetryKeyPrefix, username)
-	pipe := RDB.Pipeline()
-	incr := pipe.Incr(ctx, key)
-	pipe.Expire(ctx, key, retryExpiration)
-	_, err := pipe.Exec(ctx)
-	if err != nil {
-		return 0, err
+func IncrLoginRetry(ctx context.Context, username string) (int, error) {
+	if Client == nil {
+		return 0, nil
 	}
-	return incr.Val(), nil
+	return Client.GetLoginRetryCount(ctx, username)
 }
 
 // ResetLoginRetry 重置登录重试次数
 func ResetLoginRetry(ctx context.Context, username string) error {
-	key := fmt.Sprintf("%s%s", loginRetryKeyPrefix, username)
-	return RDB.Del(ctx, key).Err()
+	if Client == nil {
+		return nil
+	}
+	return Client.ResetLoginRetry(ctx, username)
 }

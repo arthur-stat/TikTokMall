@@ -9,17 +9,20 @@ import (
 
 	"TikTokMall/app/auth/biz/service"
 	"TikTokMall/app/auth/kitex_gen/auth"
+	"TikTokMall/app/auth/repository/mysql"
 )
 
 // AuthHandler 认证服务处理器
 type AuthHandler struct {
-	svc *service.AuthService
+	svc service.AuthService
 }
 
 // NewAuthHandler 创建认证服务处理器
 func NewAuthHandler() *AuthHandler {
+	repo := mysql.NewAuthRepository()
+	svc := service.NewAuthService(repo)
 	return &AuthHandler{
-		svc: service.NewAuthService(),
+		svc: svc,
 	}
 }
 
@@ -36,8 +39,7 @@ func (h *AuthHandler) Register(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	// 调用服务层处理注册
-	userID, token, err := h.svc.Register(ctx, req.Username, req.Password, req.Email, req.Phone)
+	resp, err := h.svc.Register(ctx, &req)
 	if err != nil {
 		c.JSON(consts.StatusInternalServerError, &auth.RegisterResponse{
 			Base: &auth.BaseResp{
@@ -48,16 +50,7 @@ func (h *AuthHandler) Register(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	c.JSON(consts.StatusOK, &auth.RegisterResponse{
-		Base: &auth.BaseResp{
-			Code:    consts.StatusOK,
-			Message: "success",
-		},
-		Data: &auth.RegisterData{
-			UserId: userID,
-			Token:  token,
-		},
-	})
+	c.JSON(consts.StatusOK, resp)
 }
 
 // Login 处理用户登录请求
@@ -73,28 +66,18 @@ func (h *AuthHandler) Login(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	// 调用服务层处理登录
-	token, refreshToken, err := h.svc.Login(ctx, req.Username, req.Password)
+	resp, err := h.svc.Login(ctx, &req)
 	if err != nil {
-		c.JSON(consts.StatusInternalServerError, &auth.LoginResponse{
+		c.JSON(consts.StatusUnauthorized, &auth.LoginResponse{
 			Base: &auth.BaseResp{
-				Code:    consts.StatusInternalServerError,
+				Code:    consts.StatusUnauthorized,
 				Message: err.Error(),
 			},
 		})
 		return
 	}
 
-	c.JSON(consts.StatusOK, &auth.LoginResponse{
-		Base: &auth.BaseResp{
-			Code:    consts.StatusOK,
-			Message: "success",
-		},
-		Data: &auth.LoginData{
-			Token:        token,
-			RefreshToken: refreshToken,
-		},
-	})
+	c.JSON(consts.StatusOK, resp)
 }
 
 // RefreshToken 处理令牌刷新请求
@@ -111,10 +94,9 @@ func (h *AuthHandler) RefreshToken(ctx context.Context, c *app.RequestContext) {
 	}
 
 	// 从Authorization头中获取refreshToken
-	refreshToken := strings.TrimPrefix(req.RefreshToken, "Bearer ")
+	req.RefreshToken = strings.TrimPrefix(req.RefreshToken, "Bearer ")
 
-	// 调用服务层处理令牌刷新
-	token, newRefreshToken, err := h.svc.RefreshToken(ctx, refreshToken)
+	resp, err := h.svc.RefreshToken(ctx, &req)
 	if err != nil {
 		c.JSON(consts.StatusInternalServerError, &auth.RefreshTokenResponse{
 			Base: &auth.BaseResp{
@@ -125,19 +107,10 @@ func (h *AuthHandler) RefreshToken(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	c.JSON(consts.StatusOK, &auth.RefreshTokenResponse{
-		Base: &auth.BaseResp{
-			Code:    consts.StatusOK,
-			Message: "success",
-		},
-		Data: &auth.RefreshTokenData{
-			Token:        token,
-			RefreshToken: newRefreshToken,
-		},
-	})
+	c.JSON(consts.StatusOK, resp)
 }
 
-// Logout 处理用户登出请求
+// Logout 处理登出请求
 func (h *AuthHandler) Logout(ctx context.Context, c *app.RequestContext) {
 	var req auth.LogoutRequest
 	if err := c.BindAndValidate(&req); err != nil {
@@ -150,11 +123,10 @@ func (h *AuthHandler) Logout(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	// 从Authorization头中获取token
-	token := strings.TrimPrefix(req.Token, "Bearer ")
+	req.Token = strings.TrimPrefix(req.Token, "Bearer ")
 
-	// 调用服务层处理登出
-	if err := h.svc.Logout(ctx, token); err != nil {
+	resp, err := h.svc.Logout(ctx, &req)
+	if err != nil {
 		c.JSON(consts.StatusInternalServerError, &auth.LogoutResponse{
 			Base: &auth.BaseResp{
 				Code:    consts.StatusInternalServerError,
@@ -164,12 +136,7 @@ func (h *AuthHandler) Logout(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	c.JSON(consts.StatusOK, &auth.LogoutResponse{
-		Base: &auth.BaseResp{
-			Code:    consts.StatusOK,
-			Message: "success",
-		},
-	})
+	c.JSON(consts.StatusOK, resp)
 }
 
 // ValidateToken 处理令牌验证请求
@@ -185,11 +152,9 @@ func (h *AuthHandler) ValidateToken(ctx context.Context, c *app.RequestContext) 
 		return
 	}
 
-	// 从Authorization头中获取token
-	token := strings.TrimPrefix(req.Token, "Bearer ")
+	req.Token = strings.TrimPrefix(req.Token, "Bearer ")
 
-	// 调用服务层处理令牌验证
-	userID, username, err := h.svc.ValidateToken(ctx, token)
+	resp, err := h.svc.ValidateToken(ctx, &req)
 	if err != nil {
 		c.JSON(consts.StatusInternalServerError, &auth.ValidateTokenResponse{
 			Base: &auth.BaseResp{
@@ -200,14 +165,5 @@ func (h *AuthHandler) ValidateToken(ctx context.Context, c *app.RequestContext) 
 		return
 	}
 
-	c.JSON(consts.StatusOK, &auth.ValidateTokenResponse{
-		Base: &auth.BaseResp{
-			Code:    consts.StatusOK,
-			Message: "success",
-		},
-		Data: &auth.ValidateTokenData{
-			UserId:   userID,
-			Username: username,
-		},
-	})
+	c.JSON(consts.StatusOK, resp)
 }
