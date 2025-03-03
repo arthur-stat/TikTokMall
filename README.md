@@ -25,7 +25,7 @@ TikTokMall 是一个基于字节跳动开源的 CloudWeGo 中间件集合的高�
 - Jaeger: 分布式链路追踪
 - Prometheus: 监控系统
 - Grafana: 可视化监控
-- ELK Stack: 日志收集与分析（可选）
+- ELK Stack: 日志收集与分析
   - Elasticsearch
   - Logstash
   - Kibana
