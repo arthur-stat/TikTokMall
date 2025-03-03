@@ -4,6 +4,8 @@ log() {
 	echo "[INFO] $1"
 }
 
+cd ..
+
 services=("auth" "cart" "checkout" "order" "payment" "product" "user")
 
 log "Starting go mod tidy for all services..."
