@@ -8,6 +8,7 @@ import (
 	"github.com/cloudwego/hertz/pkg/app/server"
 	"github.com/cloudwego/hertz/pkg/app/server/registry"
 	"github.com/cloudwego/hertz/pkg/common/hlog"
+	"github.com/cloudwego/hertz/pkg/network/standard"
 	"github.com/hertz-contrib/cors"
 
 	"TikTokMall/app/order/biz/dal/mysql"
@@ -16,12 +17,14 @@ import (
 	"TikTokMall/app/order/biz/utils"
 	"TikTokMall/app/order/conf"
 	"TikTokMall/app/order/pkg/hertz"
+	"TikTokMall/app/order/pkg/mtls"
 	"TikTokMall/app/order/pkg/tracer"
 )
 
 func main() {
 	// 1. 初始化配置
 	conf.Init()
+	config := conf.GetConf()
 
 	// 2. 初始化追踪
 	tracer, closer, err := tracer.InitJaeger()
@@ -43,18 +46,52 @@ func main() {
 	}
 
 	// 创建服务器
-	h := server.Default(
-		server.WithHostPorts(":8000"),
-		server.WithRegistry(r, &registry.Info{
-			ServiceName: "order",
-			Addr:        utils.NewNetAddr("tcp", "localhost:8000"),
-			Weight:      10,
-			Tags: map[string]string{
-				"version": "v1",
-				"service": "order",
-			},
-		}),
-	)
+	var h *server.Hertz
+
+	// 检查是否启用TLS
+	if config.TLS.Enabled {
+		// 创建TLS配置
+		tlsConfig, err := mtls.NewKitexServerTLSConfig(
+			config.TLS.CACertPath,
+			config.TLS.CertPath,
+			config.TLS.KeyPath,
+		)
+		if err != nil {
+			hlog.Fatalf("创建TLS配置失败: %v", err)
+		}
+
+		// 使用TLS配置创建服务器
+		h = server.Default(
+			server.WithHostPorts(":8000"),
+			server.WithRegistry(r, &registry.Info{
+				ServiceName: "order",
+				Addr:        utils.NewNetAddr("tcp", "localhost:8000"),
+				Weight:      10,
+				Tags: map[string]string{
+					"version": "v1",
+					"service": "order",
+				},
+			}),
+			server.WithTLS(tlsConfig),
+			server.WithTransport(standard.NewTransporter),
+		)
+
+		hlog.Infof("TLS已启用，服务器将使用HTTPS")
+	} else {
+		// 不使用TLS配置创建服务器
+		h = server.Default(
+			server.WithHostPorts(":8000"),
+			server.WithRegistry(r, &registry.Info{
+				ServiceName: "order",
+				Addr:        utils.NewNetAddr("tcp", "localhost:8000"),
+				Weight:      10,
+				Tags: map[string]string{
+					"version": "v1",
+					"service": "order",
+				},
+			}),
+		)
+	}
 
 	// 添加CORS中间件
 	h.Use(cors.New(cors.Config{

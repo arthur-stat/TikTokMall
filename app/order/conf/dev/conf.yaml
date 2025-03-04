@@ -21,3 +21,11 @@ redis:
   username: ""
   password: ""
   db: 0
+
+tls:
+  enabled: false
+  ca_cert_path: "cert/ca.pem"
+  cert_path: "cert/server.pem"
+  key_path: "cert/server.key"
+  server_name: "order.service"
+  client_verify: true
