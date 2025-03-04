@@ -9,6 +9,24 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+// RedisClient 定义Redis客户端接口
+type RedisClient interface {
+	// 基本操作
+	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd
+	Get(ctx context.Context, key string) *redis.StringCmd
+	Del(ctx context.Context, keys ...string) *redis.IntCmd
+
+	// Hash操作
+	HSet(ctx context.Context, key string, values ...interface{}) *redis.IntCmd
+	HGet(ctx context.Context, key string, field string) *redis.StringCmd
+	HGetAll(ctx context.Context, key string) *redis.MapStringStringCmd
+	HDel(ctx context.Context, key string, fields ...string) *redis.IntCmd
+
+	// 其他可能需要的方法
+	Ping(ctx context.Context) *redis.StatusCmd
+	Close() error
+}
+
 var RDB RedisClient
 
 func Init() error {

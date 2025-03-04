@@ -1,15 +1,15 @@
 env: "dev"
 
 service:
-  name: "cart"
-  port: 8080
+  name: "cart-service"
+  port: 8888
   log_level: "info"
 
 mysql:
   host: "localhost"
   port: 3306
   user: "root"
-  password: "root"
+  password: "root123"
   database: "tiktok_mall"
   max_idle_conns: 10
   max_open_conns: 100
@@ -18,7 +18,7 @@ redis:
   host: "localhost"
   port: 6379
   username: ""
-  password: ""
+  password: "redis123"
   db: 0
 
 registry:
@@ -40,3 +40,11 @@ jaeger:
 
 prometheus:
   port: 9090
+
+tls:
+  enable: true
+  ca_cert_path: "certs/ca.crt"
+  server_cert_path: "certs/server.crt"
+  server_key_path: "certs/server.key"
+  client_cert_path: "certs/client.crt"
+  client_key_path: "certs/client.key"
