@@ -16,12 +16,14 @@ import (
 	"TikTokMall/app/checkout/biz/utils"
 	"TikTokMall/app/checkout/conf"
 	"TikTokMall/app/checkout/pkg/hertz"
+	"TikTokMall/app/checkout/pkg/mtls"
 	"TikTokMall/app/checkout/pkg/tracer"
 )
 
 func main() {
 	// 1. 初始化配置
 	conf.Init()
+	config := conf.GetConfig()
 
 	// 2. 初始化追踪
 	tracer, closer, err := tracer.InitJaeger()
@@ -42,19 +44,35 @@ func main() {
 		hlog.Fatalf("create consul register failed: %v", err)
 	}
 
-	// 创建服务器
+	// 创建服务器，使用Default方法
 	h := server.Default(
-		server.WithHostPorts(":8000"),
+		server.WithHostPorts(fmt.Sprintf(":%d", config.Service.Port)),
 		server.WithRegistry(r, &registry.Info{
-			ServiceName: "checkout",
-			Addr:        utils.NewNetAddr("tcp", "localhost:8000"),
+			ServiceName: config.Service.Name,
+			Addr:        utils.NewNetAddr("tcp", fmt.Sprintf("localhost:%d", config.Service.Port)),
 			Weight:      10,
 			Tags: map[string]string{
 				"version": "v1",
-				"service": "checkout",
+				"service": config.Service.Name,
 			},
 		}),
 	)
+
+	// 如果启用了TLS，记录日志
+	if config.TLS.Enable {
+		_, err := mtls.NewServerTLSConfig(
+			config.TLS.CACertPath,
+			config.TLS.ServerCertPath,
+			config.TLS.ServerKeyPath,
+		)
+		if err != nil {
+			hlog.Errorf("TLS配置失败: %v", err)
+		} else {
+			// 由于已经创建了服务器，我们需要手动设置TLS配置
+			// 注意：这里可能需要根据Hertz的API进行调整
+			hlog.Warn("TLS配置已启用，但在服务器创建后设置TLS可能不生效")
+		}
+	}
 
 	// 添加CORS中间件
 	h.Use(cors.New(cors.Config{

@@ -19,6 +19,7 @@ type Config struct {
 	Log        LogConfig        `mapstructure:"log"`
 	Jaeger     JaegerConfig     `mapstructure:"jaeger"`
 	Prometheus PrometheusConfig `mapstructure:"prometheus"`
+	TLS        TLSConfig        `mapstructure:"tls"`
 }
 
 type ServiceConfig struct {
@@ -59,6 +60,15 @@ type JaegerConfig struct {
 type PrometheusConfig struct {
 	Port int    `mapstructure:"port"`
 	Path string `mapstructure:"path"`
+}
+
+type TLSConfig struct {
+	Enable         bool   `mapstructure:"enable"`
+	CACertPath     string `mapstructure:"ca_cert_path"`
+	ServerCertPath string `mapstructure:"server_cert_path"`
+	ServerKeyPath  string `mapstructure:"server_key_path"`
+	ClientCertPath string `mapstructure:"client_cert_path"`
+	ClientKeyPath  string `mapstructure:"client_key_path"`
 }
 
 func Init() {

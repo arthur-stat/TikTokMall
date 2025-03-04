@@ -1,17 +1,16 @@
 service:
   name: "checkout"
-  port: 8080
+  port: 8000
 
 mysql:
   host: "localhost"
   port: 3306
   user: "root"
-  password: "root"
+  password: "123456"
   database: "tiktok_mall"
 
 registry:
-  registry_address:
-    - "localhost:8500"
+  registry_address: ["localhost:8501"]
   username: ""
   password: ""
 
@@ -27,14 +26,22 @@ prometheus:
   path: "/metrics"
 
 log:
-  level: "info"
+  level: "debug"
   filename: "logs/checkout.log"
   max_size: 100    # megabytes
   max_age: 7       # days
-  max_backups: 5
+  max_backups: 10
 
 redis:
   address: "127.0.0.1:6379"
   username: ""
   password: ""
   db: 0
+
+tls:
+  enable: false
+  ca_cert_path: "./cert/ca.crt"
+  server_cert_path: "./cert/server.crt"
+  server_key_path: "./cert/server.key"
+  client_cert_path: "./cert/client.crt"
+  client_key_path: "./cert/client.key"
