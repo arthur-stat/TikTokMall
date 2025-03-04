@@ -24,8 +24,8 @@ redis:
 
 tls:
   enabled: false
-  ca_cert_path: "cert/ca.pem"
-  cert_path: "cert/server.pem"
-  key_path: "cert/server.key"
+  ca_cert_path: "../../certs/ca-cert.pem"
+  cert_path: "../../certs/auth-cert.pem"
+  key_path: "../../certs/auth-key.pem"
   server_name: "order.service"
   client_verify: true

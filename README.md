@@ -49,6 +49,11 @@ TikTokMall 是一个基于字节跳动开源的 CloudWeGo 中间件集合的高�
 - 缓存机制
 - 分布式事务
 - 统一认证
+- 双向 TLS 认证 (mTLS)
+  - 服务间安全通信
+  - 证书管理
+  - 身份验证
+  - 防止中间人攻击
 
 ## 相关链接
 
@@ -64,15 +69,33 @@ TikTokMall/
 │   ├── cart/               # 购物车服务
 │   ├── checkout/           # 结算服务
 │   ├── order/              # 订单服务
+│   │   ├── conf/          # 配置文件目录
+│   │   ├── pkg/           # 工具包目录
+│   │   │   ├── client/    # 客户端工具
+│   │   │   ├── hertz/     # Hertz框架工具
+│   │   │   ├── metrics/   # 监控指标工具
+│   │   │   ├── middleware/# 中间件工具
+│   │   │   ├── mtls/      # mTLS 配置工具
+│   │   │   ├── tracer/    # 链路追踪工具
+│   │   │   └── utils/     # 通用工具
 │   ├── payment/            # 支付服务
 │   ├── product/            # 商品服务
 │   └── user/               # 用户服务
+├── certs/                  # 证书目录
+│   ├── ca-cert.pem        # CA 证书
+│   ├── ca-key.pem         # CA 私钥
+│   ├── ca-cert.srl        # CA 证书序列号
+│   ├── auth-cert.pem      # 认证服务证书
+│   └── auth-key.pem       # 认证服务私钥
 ├── deploy/                # 部署和基础设施配置
 │   └── docker/           # Docker 相关配置
 │       ├── docker-compose.yaml  # 基础服务编排配置
 │       ├── mysql/        # MySQL 配置和初始化脚本
 │       ├── prometheus/   # Prometheus 监控配置
 │       └── logstash/     # ELK 日志收集配置
+├── docs/                   # 文档目录
+│   ├── development_guide.md # 开发指南
+│   └── mtls.md            # mTLS 配置文档
 ├── idl/                    # Protocol Buffers 定义目录
 │   ├── api.proto          # API 通用注解文件
 │   ├── auth.proto         # 用户认证服务的 .proto 文件
@@ -82,13 +105,21 @@ TikTokMall/
 │   ├── payment.proto      # 支付服务的 .proto 文件
 │   ├── product.proto      # 商品服务的 .proto 文件
 │   └── user.proto         # 用户服务的 .proto 文件
+├── pkg/                    # 共享工具包目录
+│   └── security/          # 安全相关工具
+│       └── mtls/          # 共享 mTLS 工具
+│           └── config.go  # TLS 配置实现
 ├── rpc_gen/                # 生成的客户端代码目录
 │   ├── kitex_gen/         # Kitex 生成的客户端代码
 │   └── rpc/               # 自定义的 RPC 客户端代码
+├── scripts/                # 脚本目录
+│   ├── clean_generated_code.sh # 清理生成代码的脚本
+│   ├── generate_certs.sh  # 生成证书的脚本
+│   ├── generate_code.sh   # 生成RPC代码的脚本
+│   └── tidy_all.sh        # 整理和拉取依赖的脚本
 ├── README.md              # 项目说明文件
-├── clean_generated_code.sh # 清理生成代码的脚本
-├── generate_code.sh       # 生成代码的脚本
-└── tidy_all.sh           # 整理和拉取依赖的脚本
+├── go.mod                 # Go模块定义
+└── go.sum                 # Go依赖校验和
 ```
 
 ## 微服务说明
@@ -142,6 +173,12 @@ service/                   # 服务根目录
 │   │   └── conf.yaml   # 测试环境配置文件
 │   └── online/        # 生产环境配置
 │       └── conf.yaml   # 生产环境配置文件
+├── pkg/                # 工具包目录
+│   ├── client/        # 客户端工具
+│   │   └── options.go # 客户端选项配置
+│   ├── mtls/          # mTLS 配置工具
+│   │   └── config.go  # TLS 配置实现
+│   └── utils/         # 通用工具
 ├── handler.go          # RPC 请求处理入口
 ├── main.go            # 服务启动入口
 ├── build.sh           # 服务构建脚本
@@ -178,8 +215,16 @@ service/                   # 服务根目录
      - 缓存配置
      - 日志配置
      - 服务发现配置
+     - TLS 配置（证书路径、是否启用等）
 
-4. **根目录文件**
+4. **pkg (工具包)**
+   - `client/`: 客户端工具
+     - `options.go`: 客户端选项配置，包括 TLS 配置
+   - `mtls/`: mTLS 配置工具
+     - `config.go`: 实现 TLS 配置创建，包括服务端和客户端配置
+   - `utils/`: 通用工具
+
+5. **根目录文件**
    - `handler.go`: 处理 RPC 请求，调用对应的业务逻辑
    - `main.go`: 服务启动入口，负责初始化和启动服务
    - `build.sh`: 服务构建脚本
@@ -197,6 +242,33 @@ service/                   # 服务根目录
 - Consul
 - Docker & Docker Compose
 
+### mTLS 配置
+
+TikTokMall 使用双向 TLS (mTLS) 进行服务间安全通信。要启用 mTLS，请按照以下步骤操作：
+
+1. 证书准备：
+   - 项目根目录的 `certs/` 文件夹包含了预生成的证书
+   - 包括 CA 证书、服务证书和密钥
+
+2. 服务配置：
+   - 每个服务的配置文件中都有 TLS 相关配置项
+   - 默认情况下，TLS 是禁用的 (`enabled: false`)
+   - 要启用 TLS，将 `enabled` 设置为 `true`
+
+3. 示例配置：
+```yaml
+tls:
+  enabled: true
+  ca_cert_path: "../../certs/ca-cert.pem"
+  cert_path: "../../certs/service-cert.pem"
+  key_path: "../../certs/service-key.pem"
+  server_name: "service.name"
+  client_verify: true
+```
+
+4. 客户端配置：
+   - 每个服务都有对应的客户端包，用于其他服务调用
+   - 客户端会自动读取 TLS 配置并建立安全连接
 
 ### 常用命令
 
@@ -276,6 +348,10 @@ service/                   # 服务根目录
    - 使用 Kitex RPC 框架
    - Protobuf 序列化
    - 服务发现与负载均衡
+   - 双向 TLS 认证 (mTLS)
+     - 基于 X.509 证书的身份验证
+     - 服务间通信加密
+     - 防止中间人攻击和未授权访问
 
 2. **异步通信**
    - Kafka 消息队列
@@ -326,6 +402,16 @@ service/                   # 服务根目录
    - 性能监控
    - 日志聚合
    - 告警系统
+
+4. **安全性**
+   - 双向 TLS 认证 (mTLS)
+     - 服务间通信加密
+     - 基于证书的身份验证
+     - 防止未授权服务接入
+     - 支持证书轮换
+   - 统一认证授权
+   - 数据加密存储
+   - 安全审计日志
 
 ## 本地部署
 
