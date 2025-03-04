@@ -1,6 +1,8 @@
 package client
 
 import (
+	"fmt"
+
 	"github.com/cloudwego/kitex/client"
 
 	"TikTokMall/app/cart/conf"
@@ -31,7 +33,9 @@ func NewClientOptions() []client.Option {
 		)
 		if err == nil {
 			// 简化TLS配置，仅使用基本选项
-			options = append(options, client.WithHostPorts(config.Service.Address))
+			// 使用默认地址，因为ServiceConfig没有Address字段
+			defaultAddress := fmt.Sprintf("localhost:%d", config.Service.Port)
+			options = append(options, client.WithHostPorts(defaultAddress))
 
 			// 注意：由于Kitex版本或配置问题，我们暂时不使用高级TLS配置
 			// 如果需要TLS，请确保Kitex版本支持以下API

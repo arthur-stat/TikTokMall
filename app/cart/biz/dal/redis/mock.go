@@ -51,13 +51,14 @@ func (m *MockRedisClient) Set(ctx context.Context, key string, value interface{}
 
 func (m *MockRedisClient) Del(ctx context.Context, keys ...string) *redis.IntCmd {
 	cmd := redis.NewIntCmd(ctx)
-	var count int64
+
+	// 实际删除数据
 	for _, key := range keys {
-		if _, ok := m.storage.LoadAndDelete(key); ok {
-			count++
-		}
+		m.storage.Delete(key)
+		m.hashStorage.Delete(key) // 同时删除哈希表
 	}
-	cmd.SetVal(count)
+
+	cmd.SetVal(int64(len(keys))) // 返回删除的键数量
 	return cmd
 }
 

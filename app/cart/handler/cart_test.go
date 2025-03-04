@@ -124,6 +124,9 @@ func TestCartServiceImpl_EmptyCart(t *testing.T) {
 	ctx := context.Background()
 	handler := NewCartServiceImpl()
 
+	// 确保测试环境干净
+	cleanTestData()
+
 	// 先添加一些商品到测试用户购物车
 	addReq := &cart.AddItemReq{
 		UserId: 88888,
