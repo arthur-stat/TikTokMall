@@ -11,12 +11,18 @@ kitex:
 
 mysql:
   dsn: "gorm:gorm@tcp(127.0.0.1:3306)/gorm?charset=utf8mb4&parseTime=True&loc=Local"
+  host: localhost
+  port: 3306
+  user: tiktok
+  password: tiktok123
+  dbname: tiktok_mall
 
 redis:
   address: "127.0.0.1:6379"
   username: ""
   password: ""
   db: 0
+  addr: localhost:6379
 
 registry:
   registry_address:
@@ -37,3 +43,23 @@ jaeger:
 prometheus:
   port: 9090
   path: "/metrics"
+
+server:
+  port: 8000
+
+jwt:
+  secret: "tiktok_mall_secret_key"
+  access_token_exp: 3600  # 1小时
+  refresh_token_exp: 604800  # 7天
+
+consul:
+  addr: localhost:8500
+
+# 修改TLS配置中的证书路径
+tls:
+  enabled: true
+  ca_cert: "certs/ca-cert.pem"
+  server_cert: "certs/auth-cert.pem"
+  server_key: "certs/auth-key.pem"
+  client_cert: "certs/auth-cert.pem"
+  client_key: "certs/auth-key.pem"

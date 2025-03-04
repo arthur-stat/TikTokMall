@@ -25,6 +25,7 @@ type Config struct {
 	Log        LogConfig        `mapstructure:"log"`
 	Jaeger     JaegerConfig     `mapstructure:"jaeger"`
 	Prometheus PrometheusConfig `mapstructure:"prometheus"`
+	TLS        TLSConfig        `mapstructure:"tls"`
 }
 
 type ServiceConfig struct {
@@ -34,12 +35,15 @@ type ServiceConfig struct {
 }
 
 type MySQLConfig struct {
-	DSN string `mapstructure:"dsn"`
+	Host     string `mapstructure:"host"`
+	Port     int    `mapstructure:"port"`
+	User     string `mapstructure:"user"`
+	Password string `mapstructure:"password"`
+	DBName   string `mapstructure:"dbname"`
 }
 
 type RedisConfig struct {
-	Address  string `mapstructure:"address"`
-	Username string `mapstructure:"username"`
+	Addr     string `mapstructure:"addr"`
 	Password string `mapstructure:"password"`
 	DB       int    `mapstructure:"db"`
 }
@@ -75,6 +79,15 @@ type JaegerConfig struct {
 type PrometheusConfig struct {
 	Port int    `mapstructure:"port"`
 	Path string `mapstructure:"path"`
+}
+
+type TLSConfig struct {
+	Enabled    bool   `mapstructure:"enabled"`
+	CACert     string `mapstructure:"ca_cert"`
+	ServerCert string `mapstructure:"server_cert"`
+	ServerKey  string `mapstructure:"server_key"`
+	ClientCert string `mapstructure:"client_cert"`
+	ClientKey  string `mapstructure:"client_key"`
 }
 
 // GetConf gets configuration instance
